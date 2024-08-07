@@ -77,7 +77,7 @@ async def list(inter):
 
 
 @bot.slash_command(name="멤버관리", description="다수 혹은 한명의 그룹 랭크를 관리하는 명령어")
-@commands.has_any_role("메모", "MTA")
+@commands.has_any_role("『兵曹』 병조")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
     await inter.response.defer()
     try:
