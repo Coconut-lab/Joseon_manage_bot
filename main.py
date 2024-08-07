@@ -325,6 +325,45 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
+@bot.slash_command(name="호적승인", description="천민에서 상민으로 그룹 랭크 조정")
+@commands.has_role(695978137196036163)
+async def rank(inter: disnake.ApplicationCommandInteraction, text: str):
+    await inter.response.defer()
+    try:
+        results = []
+        user = await roblox_client.get_user_by_username(text)
+
+        if user is None:
+            results.append(f"{text}은(는) 유효하지 않은 사용자명입니다.")
+            await inter.followup.send("\n".join(results))
+            return
+
+        group = await roblox_client.get_group(hanyang_group_id)
+        group_member = group.get_member(user.id)
+
+        if group_member is None:
+            results.append(f"{text}님은 그룹에 속해 있지 않습니다.")
+            await inter.followup.send("\n".join(results))
+            return
+
+
+        try:
+            await group.set_rank(user.id, 20)
+            results.append(f"{text}님의 랭크를 상민으로 변경했습니다.")
+        except Exception as e:
+            error_message = str(e)
+            if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                results.append(f"{text}님은 이미 상민입니다.")
+            elif "401 Unauthorized" in error_message:
+                results.append(f"{text}님은 이미 상민 이상의 랭크를 가지고 있어 변경할 수 없습니다.")
+            else:
+                raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
+
+        await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
+
+    except Exception as e:
+        await inter.followup.send(f"오류가 발생했습니다: {str(e)}")
+
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
     if isinstance(error, commands.MissingAnyRole):
