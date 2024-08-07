@@ -49,7 +49,6 @@ RANK_ROLES = {
 
 
 
-
 @bot.event
 async def on_ready():
     print("Bot is ready!")
@@ -75,7 +74,6 @@ async def list(inter):
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
 
-
 @bot.slash_command(name="멤버관리", description="다수 혹은 한명의 그룹 랭크를 관리하는 명령어")
 @commands.has_any_role("『兵曹』 병조")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
@@ -91,32 +89,44 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
                 usernames.append(parts[0])
                 rank_numbers.append(int(parts[1]))
 
-        group = await roblox_client.get_group(joseon_group_id)
-
         results = []
         for username, rank in zip(usernames, rank_numbers):
             try:
                 user = await roblox_client.get_user_by_username(username)
-            except:
-                results.append(f"{username}은(는) 유효하지 않은 사용자명입니다.")
-                continue
+                if user is None:
+                    results.append(f"{username}은(는) 유효하지 않은 사용자명입니다.")
+                    continue
 
-            try:
-                group_member = await group.get_member(user.id)
-            except:
-                results.append(f"{username}님은 그룹에 속해 있지 않습니다.")
-                continue
+                group = await roblox_client.get_group(joseon_group_id)
+                group_member = group.get_member(user.id)
 
-            if rank in RANK_ROLES:
-                role = RANK_ROLES[rank]
-                await group.set_rank(user, rank)
-                results.append(f"{username}님의 랭크를 {rank}({role})로 변경했습니다.")
-            else:
-                results.append(f"{username}님에 대해 없는 랭크({rank})가 지정되었습니다.")
+                if group_member is None:
+                    results.append(f"{username}님은 그룹에 속해 있지 않습니다.")
+                    continue
+
+                if rank in RANK_ROLES:
+                    role = RANK_ROLES[rank]
+                    try:
+                        await group.set_rank(user.id, rank)
+                        results.append(f"{username}님의 랭크를 {role}({rank})로 변경했습니다.")
+                    except Exception as e:
+                        error_message = str(e)
+                        if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                            results.append(f"{username}님은 이미 {role}({rank}) 랭크입니다.")
+                        else:
+                            raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
+                else:
+                    results.append(f"{username}님에 대해 없는 랭크({rank})가 지정되었습니다.")
+
+            except Exception as e:
+                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+
+            await asyncio.sleep(0.5)  # API 요청 사이에 짧은 대기 시간 추가
 
         await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
     except Exception as e:
-        await inter.followup.send(f"{inter.user.mention} 에러가 발생했습니다: {e}")
+        await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
 
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
