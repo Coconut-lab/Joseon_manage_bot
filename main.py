@@ -25,7 +25,7 @@ intents = disnake.Intents.default()
 joseon_group_id = "4654286"
 
 RANK_ROLES = {
-    98: "대장",
+    96: "대장",
     92: "중군",
     88: "천총",
     84: "별장",
