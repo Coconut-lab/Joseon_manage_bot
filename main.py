@@ -97,14 +97,43 @@ async def list(inter):
 
         # 임베드 필드
         embed.add_field(name="test", value="봇 작동 유무 확인용 명령어 입니다.", inline=False)
+        embed.add_field(name="설명서", value="기본적인 그룹 관리 명령어 설명서 입니다.", inline=False)
         embed.add_field(name="조선군관리", value="다수 혹은 한명의 조선군 랭크를 관리하는 명령어 입니다.", inline=False)
         embed.add_field(name="도감군관리", value="다수 혹은 한명의 도감군 랭크를 관리하는 명령어 입니다.", inline=False)
         embed.add_field(name="어영군관리", value="다수 혹은 한명의 어영군 랭크를 관리하는 명령어 입니다.", inline=False)
         embed.add_field(name="조선군랭크", value="조선군 그룹 랭크 번호 리스트 입니다.", inline=False)
         embed.add_field(name="도감군랭크", value="도감군 그룹 랭크 번호 리스트 입니다.", inline=False)
         embed.add_field(name="어영군랭크", value="어영군 그룹 랭크 번호 리스트 입니다.", inline=False)
+        embed.add_field(name="호적승인", value="천민에서 상민으로 그룹 랭크 조정 **호조 권한**", inline=False)
+
 
         await inter.response.send_message(embed=embed)
+
+    except Exception as e:
+        await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
+@bot.slash_command(name="설명서", description="기본적인 그룹 관리 명령어 설명서")
+async def manual(inter):
+    try:
+        # 임베드 헤더
+        embed = disnake.Embed(
+            title = "설명서",
+            description="기본적인 그룹 관리 명령어를 알려드립니다.",
+            color = disnake.Color.yellow(),
+        )
+
+        # 임베드 필드
+        embed.add_field(name="조선(도감,어영)군관리 명령어", value="/조선(도감,어영)군관리 이름 랭크번호 / 이름2 랭크번호 ...", inline=False)
+        embed.add_field(name="조선(도감,어영)군랭크 명령어", value="각 그룹의 랭크 번호를 알려주는 명령어 입니다. 먼저 확인 후에 관리 명령어를 사용하세요.", inline=False)
+        embed.add_field(name="호적신고 명령어", value="호조만 사용할 수 있는 명령어로 로블록스 이름을 입력하면 해당 사람을 천민에서 상민으로 조정합니다.", inline=False)
+
+        # 임베드 풋터
+        embed.set_footer(
+            text="더 자세한 문의는 병조참판 차지철에게 DM",
+        )
+
+        await inter.response.send_message(embed=embed)
+
 
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
