@@ -171,7 +171,7 @@ async def list(inter):
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
     try:
-        lines = text.split("/")
+        lines = 이름_랭크번호.split("/")
         usernames = []
         rank_numbers = []
 
@@ -224,7 +224,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
     try:
-        lines = text.split("/")
+        lines = 이름_랭크번호.split("/")
         usernames = []
         rank_numbers = []
 
@@ -277,7 +277,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
     try:
-        lines = text.split("/")
+        lines = 이름_랭크번호.split("/")
         usernames = []
         rank_numbers = []
 
