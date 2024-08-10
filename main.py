@@ -168,7 +168,7 @@ async def list(inter):
 
 @bot.slash_command(name="조선군관리", description="다수 혹은 한명의 조선군 랭크를 관리하는 명령어")
 @commands.has_any_role(597769848256200717, 1270777112982323274, 1270777180921528391)
-async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
+async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
     try:
         lines = text.split("/")
@@ -221,7 +221,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
 
 @bot.slash_command(name="도감군관리", description="다수 혹은 한명의 도감군 랭크를 관리하는 명령어")
 @commands.has_any_role(597769848256200717, 1270777112982323274)
-async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
+async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
     try:
         lines = text.split("/")
@@ -274,7 +274,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
 
 @bot.slash_command(name="어영군관리", description="다수 혹은 한명의 어영군 랭크를 관리하는 명령어")
 @commands.has_any_role(597769848256200717, 1270777180921528391)
-async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
+async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
     try:
         lines = text.split("/")
@@ -327,8 +327,9 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, text: str):
 
 @bot.slash_command(name="호적승인", description="천민에서 상민으로 그룹 랭크 조정")
 @commands.has_role(695978137196036163)
-async def rank(inter: disnake.ApplicationCommandInteraction, text: str):
+async def rank(inter: disnake.ApplicationCommandInteraction, 이름: str):
     await inter.response.defer()
+    text = 이름
     try:
         results = []
         user = await roblox_client.get_user_by_username(text)
