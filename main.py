@@ -1,10 +1,11 @@
 """
 구현할 기능
 로블록스 자동 그룹 관리 기능 - 완성
+금지어 - 완성
 특정 채널에 올라오는 메세지를 Airtable에 기록하는 기능
 게임 오류 제보 기능
 """
-
+from datetime import datetime
 import disnake
 from disnake.ext import commands
 from roblox import Client
@@ -20,12 +21,16 @@ roblox_client = Client(os.getenv("ROBLOXTOKEN"))
 BOT_TOKEN = os.getenv("BOTTOKEN")
 
 
-bot = commands.Bot(command_prefix=None)
-intents = disnake.Intents.default()
+intents = disnake.Intents.all()
+bot = commands.InteractionBot(intents=intents)
+
+TARGET_GUILD_ID = 612989092443062278
+BANNED_WORDS_FILE = "badwords.json"
 
 joseon_group_id = "4654286"
 MTA_group_id = "4654485"
 RGO_group_id = "4654514"
+hanyang_group_id = "4766967"
 
 RANK_ROLES = {
     96: "대장",
@@ -76,11 +81,53 @@ RGO_ROLES = {
     1: "보충병"
 }
 
+def load_banned_words():
+    try:
+        with open(BANNED_WORDS_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+            return {
+                "words": data.get("words", {}),
+                "restricted_users": data.get("restricted_users", []),
+            }
+    except FileNotFoundError:
+        return {"words": {}, "restricted_users": []}
 
+def save_banned_words(words):
+    with open(BANNED_WORDS_FILE, "w", encoding="utf-8") as file:
+        json.dump(words, file, ensure_ascii=False, indent=4)
+
+banned_words_data = load_banned_words()
 
 @bot.event
 async def on_ready():
     print("Bot is ready!")
+
+@bot.event
+async def on_message(message):
+    try:
+        if message.author == bot.user:
+            return
+
+        if TARGET_GUILD_ID and message.guild.id != TARGET_GUILD_ID:
+            return
+
+        if not message.content:
+            return
+
+        content = message.content
+
+        if message.author.id in banned_words_data["restricted_users"]:
+            for word in banned_words_data["words"]:
+                if word in content.split():
+                    await message.channel.send(f"{message.author.mention}님, 부적절한 단어 사용으로 뮤트되었습니다.")
+                    await message.delete()
+                    await mute_user(message.author, message.guild)
+                    return
+
+        await bot.process_commands(message)
+
+    except Exception as e:
+        await message.channel.send(f"메시지 처리 중 오류 발생: {str(e)}")
 
 @bot.slash_command()
 async def test(inter):
@@ -394,6 +441,73 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름: str):
     except Exception as e:
         await inter.followup.send(f"오류가 발생했습니다: {str(e)}")
 
+@bot.slash_command(name="금지어추가", description="금지어를 추가합니다.")
+@commands.has_role(789359681776648202)
+async def add_banned_word(inter: disnake.ApplicationCommandInteraction, 단어: str):
+    word = 단어
+    banned_words_data["words"][word] = {
+        "added_by": str(inter.author),
+        "added_at": datetime.now().isoformat()
+    }
+    save_banned_words(banned_words_data)
+    await inter.response.send_message(f"금지어 '{word}'가 추가되었습니다.")
+
+@bot.slash_command(name="금지어제거", description="금지어를 제거합니다.")
+@commands.has_role(789359681776648202)
+async def remove_banned_word(inter: disnake.ApplicationCommandInteraction, 단어: str):
+    word = 단어
+    if word in banned_words_data["words"]:
+        del banned_words_data["words"][word]
+        save_banned_words(banned_words_data)
+        await inter.response.send_message(f"금지어 '{word}'가 제거되었습니다.")
+    else:
+        await inter.response.send_message(f"'{word}'는 금지어 목록에 없습니다.")
+
+@bot.slash_command(name="금지어목록", description="현재 금지어를 확인합니다.")
+@commands.has_role(789359681776648202)
+async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
+    if banned_words_data["words"]:
+        message = "현재 금지어 목록:\n"
+        for word, info in banned_words_data["words"].items():
+            added_by = info.get("added_by", "Unknown")
+            added_at = info.get("added_at", "Unknown")
+            message += f"- {word} (추가자: {added_by}, 추가일: {added_at})\n"
+        await inter.response.send_message(message)
+    else:
+        await inter.response.send_message("현재 금지어 목록이 비어 있습니다.")
+
+@bot.slash_command(name="제한사용자추가", description="금지어 규칙이 적용될 사용자를 추가합니다.")
+@commands.has_role(789359681776648202)
+async def add_restricted_user(inter: disnake.ApplicationCommandInteraction, 사용자: disnake.User):
+    user_id = 사용자.id
+    if user_id not in banned_words_data["restricted_users"]:
+        banned_words_data["restricted_users"].append(user_id)
+        save_banned_words(banned_words_data)
+        await inter.response.send_message(f"사용자 {사용자.mention}가 제한 목록에 추가되었습니다.")
+    else:
+        await inter.response.send_message(f"사용자 {사용자.mention}는 이미 제한 목록에 있습니다.")
+
+@bot.slash_command(name="제한사용자제거", description="금지어 규칙이 적용되는 사용자를 제거합니다.")
+@commands.has_role(789359681776648202)
+async def remove_restricted_user(inter: disnake.ApplicationCommandInteraction, 사용자: disnake.User):
+    user_id = 사용자.id
+    if user_id in banned_words_data["restricted_users"]:
+        banned_words_data["restricted_users"].remove(user_id)
+        save_banned_words(banned_words_data)
+        await inter.response.send_message(f"사용자 {사용자.mention}가 제한 목록에서 제거되었습니다.")
+    else:
+        await inter.response.send_message(f"사용자 {사용자.mention}는 제한 목록에 없습니다.")
+
+@bot.slash_command(name="제한사용자목록", description="금지어 규칙이 적용되는 사용자 목록을 확인합니다.")
+@commands.has_role(789359681776648202)
+async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
+    if banned_words_data["restricted_users"]:
+        users = [await bot.fetch_user(user_id) for user_id in banned_words_data["restricted_users"]]
+        user_list = "\n".join([f"- {user.name}#{user.discriminator} (ID: {user.id})" for user in users])
+        await inter.response.send_message(f"현재 제한된 사용자 목록:\n{user_list}")
+    else:
+        await inter.response.send_message("현재 제한된 사용자가 없습니다.")
+
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
     if isinstance(error, commands.MissingAnyRole):
@@ -401,5 +515,24 @@ async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, e
     else:
         await inter.response.send_message(f"오류가 발생했습니다: {str(error)}", ephemeral=True)
 
+
+async def mute_user(member: disnake.Member, guild: disnake.Guild):
+    mute_role = guild.get_role(795147706237714433)
+
+    if not mute_role:
+        return
+
+    if mute_role not in member.roles:
+        await member.add_roles(mute_role)
+
+        # 30분(1800초) 후에 자동으로 언뮤트
+        await asyncio.sleep(1800)
+
+        # 멤버가 여전히 서버에 있고, 여전히 뮤트 상태인지 확인
+        updated_member = guild.get_member(member.id)
+        if updated_member and mute_role in updated_member.roles:
+            await updated_member.remove_roles(mute_role)
+    else:
+        print(f"{member.name} is already muted.")
 
 bot.run(BOT_TOKEN)
