@@ -120,7 +120,6 @@ async def on_message(message):
             return
 
         if not message.content:
-            print("빈칸 감지")
             return
 
         content = message.content
@@ -128,7 +127,7 @@ async def on_message(message):
         if message.author.id in banned_words_data["restricted_users"]:
             for word in banned_words_data["words"]:
                 if word in content.split():
-                    await message.channel.send(f"{message.author.mention}님, 부적절한 단어 사용으로 뮤트되었습니다.")
+                    await message.channel.send(f"{message.author.mention}, 입을 잘못 놀리셔서 꼬메버렸슈다")
                     await message.delete()
                     await mute_user(message.author, message.guild)
                     return
@@ -138,7 +137,7 @@ async def on_message(message):
 
 @bot.slash_command()
 async def test(inter):
-    await inter.response.send_message("Hello World!")
+    await inter.response.send_message("저 정신 꽈악 붙잡고 있어유")
 
 @bot.slash_command(name="그룹명령어", description="그룹 관리 명령어 리스트")
 async def list(inter):
@@ -291,29 +290,29 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
             try:
                 user = await roblox_client.get_user_by_username(username)
                 if user is None:
-                    results.append(f"{username}은(는) 유효하지 않은 사용자명입니다.")
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
                     continue
 
                 group = await roblox_client.get_group(joseon_group_id)
                 group_member = group.get_member(user.id)
 
                 if group_member is None:
-                    results.append(f"{username}님은 그룹에 속해 있지 않습니다.")
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
                     continue
 
                 if rank in RANK_ROLES:
                     role = RANK_ROLES[rank]
                     try:
                         await group.set_rank(user.id, rank)
-                        results.append(f"{username}님의 랭크를 {role}({rank})로 변경했습니다.")
+                        results.append(f"{username}님의 랭크를 {role}({rank})로 바꿨구먼유")
                     except Exception as e:
                         error_message = str(e)
                         if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                            results.append(f"{username}님은 이미 {role}({rank}) 랭크입니다.")
+                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
                         else:
                             raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
                 else:
-                    results.append(f"{username}님에 대해 없는 랭크({rank})가 지정되었습니다.")
+                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
 
             except Exception as e:
                 results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
@@ -344,29 +343,29 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
             try:
                 user = await roblox_client.get_user_by_username(username)
                 if user is None:
-                    results.append(f"{username}은(는) 유효하지 않은 사용자명입니다.")
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
                     continue
 
                 group = await roblox_client.get_group(MTA_group_id)
                 group_member = group.get_member(user.id)
 
                 if group_member is None:
-                    results.append(f"{username}님은 그룹에 속해 있지 않습니다.")
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
                     continue
 
                 if rank in MTA_ROLES:
                     role = MTA_ROLES[rank]
                     try:
                         await group.set_rank(user.id, rank)
-                        results.append(f"{username}님의 랭크를 {role}({rank})로 변경했습니다.")
+                        results.append(f"{username}님의 랭크를 {role}({rank})로 바꿨구먼유")
                     except Exception as e:
                         error_message = str(e)
                         if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                            results.append(f"{username}님은 이미 {role}({rank}) 랭크입니다.")
+                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
                         else:
                             raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
                 else:
-                    results.append(f"{username}님에 대해 없는 랭크({rank})가 지정되었습니다.")
+                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
 
             except Exception as e:
                 results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
@@ -397,29 +396,29 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
             try:
                 user = await roblox_client.get_user_by_username(username)
                 if user is None:
-                    results.append(f"{username}은(는) 유효하지 않은 사용자명입니다.")
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
                     continue
 
                 group = await roblox_client.get_group(RGO_group_id)
                 group_member = group.get_member(user.id)
 
                 if group_member is None:
-                    results.append(f"{username}님은 그룹에 속해 있지 않습니다.")
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
                     continue
 
                 if rank in RGO_ROLES:
                     role = RGO_ROLES[rank]
                     try:
                         await group.set_rank(user.id, rank)
-                        results.append(f"{username}님의 랭크를 {role}({rank})로 변경했습니다.")
+                        results.append(f"{username}님의 랭크를 {role}({rank})로 바꿨구먼유")
                     except Exception as e:
                         error_message = str(e)
                         if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                            results.append(f"{username}님은 이미 {role}({rank}) 랭크입니다.")
+                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
                         else:
                             raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
                 else:
-                    results.append(f"{username}님에 대해 없는 랭크({rank})가 지정되었습니다.")
+                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
 
             except Exception as e:
                 results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
@@ -440,7 +439,7 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름: str):
         user = await roblox_client.get_user_by_username(text)
 
         if user is None:
-            results.append(f"{text}은(는) 유효하지 않은 사용자명입니다.")
+            results.append(f"{text}은(는) 효도 없는 사용자명이여유")
             await inter.followup.send("\n".join(results))
             return
 
@@ -448,20 +447,20 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름: str):
         group_member = group.get_member(user.id)
 
         if group_member is None:
-            results.append(f"{text}님은 그룹에 속해 있지 않습니다.")
+            results.append(f"{text}님은 그룹에 안 끼어 있구먼유")
             await inter.followup.send("\n".join(results))
             return
 
 
         try:
             await group.set_rank(user.id, 20)
-            results.append(f"{text}님의 랭크를 상민으로 변경했습니다.")
+            results.append(f"{text}님 랭크를 상민으로 바꿨구먼유")
         except Exception as e:
             error_message = str(e)
             if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                results.append(f"{text}님은 이미 상민입니다.")
+                results.append(f"{text}님은 벌써 상민이여유")
             elif "401 Unauthorized" in error_message:
-                results.append(f"{text}님은 이미 상민 이상의 랭크를 가지고 있어 변경할 수 없습니다.")
+                results.append(f"{text}님은 벌써 상민 이상 랭크라서 바꿀 수 없구먼유")
             else:
                 raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
 
@@ -492,12 +491,12 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
 
     response = ""
     if added_words:
-        response += f"다음 금지어가 추가되었습니다: {', '.join(added_words)}\n"
+        response += f"댕 금지어가 더 붙었어유: {', '.join(added_words)}\n"
     if already_exists:
-        response += f"다음 단어는 이미 금지어 목록에 있습니다: {', '.join(already_exists)}"
+        response += f"댕 단어는 벌써 금지어 목록에 있어유: {', '.join(already_exists)}"
 
     if not response:
-        response = "추가된 금지어가 없습니다."
+        response = "더 붙은 금지어가 읎습니다유"
 
     await inter.response.send_message(response)
 
@@ -519,12 +518,12 @@ async def remove_banned_word(inter: disnake.ApplicationCommandInteraction, 단�
 
     response = ""
     if removed_words:
-        response += f"다음 금지어가 제거되었습니다: {', '.join(removed_words)}\n"
+        response += f"댕 금지어가 빠졌습니다유: {', '.join(removed_words)}\n"
     if not_found_words:
-        response += f"다음 단어는 금지어 목록에 없습니다: {', '.join(not_found_words)}\n"
+        response += f"댕 말씀은 금지어 목록에 읎습니다유: {', '.join(not_found_words)}\n"
 
     if not response:
-        response = "제거된 금지어가 없습니다."
+        response = "빠진 금지어가 읎습니다유"
 
     await inter.response.send_message(response)
 
@@ -539,7 +538,7 @@ async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
             message += f"- {word} (추가자: {added_by}, 추가일: {added_at})\n"
         await inter.response.send_message(message)
     else:
-        await inter.response.send_message("현재 금지어 목록이 비어 있습니다.")
+        await inter.response.send_message("지금 금지어 목록이 텅 비었습니다유")
 
 @bot.slash_command(name="제한사용자추가", description="금지어 규칙이 적용될 사용자를 추가합니다.")
 @commands.has_role(ADMIN_ROLE_ID)
@@ -548,9 +547,9 @@ async def add_restricted_user(inter: disnake.ApplicationCommandInteraction, 사�
     if user_id not in banned_words_data["restricted_users"]:
         banned_words_data["restricted_users"].append(user_id)
         save_banned_words(banned_words_data)
-        await inter.response.send_message(f"사용자 {사용자}가 제한 목록에 추가되었습니다.")
+        await inter.response.send_message(f"사용자 {사용자}이(가) 제한 목록에 들어갔습니다유")
     else:
-        await inter.response.send_message(f"사용자 {사용자}는 이미 제한 목록에 있습니다.")
+        await inter.response.send_message(f"사용자 {사용자}은(는) 벌써 제한 목록에 들어 있습니다유")
 
 @bot.slash_command(name="제한사용자제거", description="금지어 규칙이 적용되는 사용자를 제거합니다.")
 @commands.has_role(ADMIN_ROLE_ID)
@@ -559,9 +558,9 @@ async def remove_restricted_user(inter: disnake.ApplicationCommandInteraction, �
     if user_id in banned_words_data["restricted_users"]:
         banned_words_data["restricted_users"].remove(user_id)
         save_banned_words(banned_words_data)
-        await inter.response.send_message(f"사용자 {사용자}가 제한 목록에서 제거되었습니다.")
+        await inter.response.send_message(f"사용자 {사용자}이(가) 제한 목록에서 빠졌습니다유")
     else:
-        await inter.response.send_message(f"사용자 {사용자}는 제한 목록에 없습니다.")
+        await inter.response.send_message(f"사용자 {사용자}은(는) 제한 목록에 읎습니다유")
 
 @bot.slash_command(name="제한사용자목록", description="금지어 규칙이 적용되는 사용자 목록을 확인합니다.")
 @commands.has_role(ADMIN_ROLE_ID)
@@ -569,9 +568,9 @@ async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
     if banned_words_data["restricted_users"]:
         users = [await bot.fetch_user(user_id) for user_id in banned_words_data["restricted_users"]]
         user_list = "\n".join([f"- {user.name} (ID: {user.id})" for user in users])
-        await inter.response.send_message(f"현재 제한된 사용자 목록:\n{user_list}")
+        await inter.response.send_message(f"지금 막아놓은 사람들 목록:\n{user_list}")
     else:
-        await inter.response.send_message("현재 제한된 사용자가 없습니다.")
+        await inter.response.send_message("지금 막아놓은 사람이 한 명도 읎습니다유")
 
 
 @bot.slash_command(name="뮤트해제", description="특정 사용자의 뮤트를 해제합니다.")
@@ -579,45 +578,45 @@ async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
 async def unmute(inter: disnake.ApplicationCommandInteraction, 멤버: disnake.Member):
     await inter.response.defer()
     await unmute_user(멤버, inter.guild)
-    await inter.followup.send(f"{멤버.mention}의 뮤트가 해제되었습니다.")
+    await inter.followup.send(f"{멤버.mention}의 입막음이 풀렸습니다유")
 
 
 @unmute.error
 async def unmute_error(inter: disnake.ApplicationCommandInteraction, error: commands.CommandError):
     if isinstance(error, commands.MissingRole):
-        await inter.response.send_message("이 명령어를 사용할 권한이 없습니다.", ephemeral=True)
+        await inter.response.send_message("저의 주인님이 아니네유", ephemeral=True)
     else:
         await inter.response.send_message(f"오류가 발생했습니다: {str(error)}", ephemeral=True)
 
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
     if isinstance(error, commands.MissingAnyRole):
-        await inter.response.send_message("이 명령어를 사용하려면 권한이 필요합니다.", ephemeral=True)
+        message = "이런 심부름은 저의 주인님만 시킬 수 있어유"
     else:
-        await inter.response.send_message(f"오류가 발생했습니다: {str(error)}", ephemeral=True)
+        message = f"오류가 발생했습니다: {str(error)}"
 
+    if not inter.response.is_done():
+        await inter.response.send_message(message, ephemeral=True)
+    else:
+        await inter.followup.send(message, ephemeral=True)
 
+"""
 async def mute_user(member: disnake.Member, guild: disnake.Guild):
     mute_role = guild.get_role(MUTE_ROLE_ID)
     if not mute_role:
-        print(f"Error: Muted role with ID {MUTE_ROLE_ID} not found in the guild.")
         return
 
     if mute_role in member.roles:
-        print(f"{member.name} is already muted.")
         return
 
     # 사용자의 현재 역할 저장
-    banned_words_data["user_roles"][str(member.id)] = [role.id for role in member.roles if
-                                                       role.id != guild.id and role.id != MUTE_ROLE_ID]
+    banned_words_data["user_roles"][str(member.id)] = [role.id for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
     save_banned_words(banned_words_data)
 
     # 모든 역할 제거 후 뮤트 역할 추가
     roles_to_remove = [role for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
     await member.remove_roles(*roles_to_remove, reason="Mute")
     await member.add_roles(mute_role)
-
-    print(f"{member.name} has been muted and roles have been stored.")
 
     # 2시간(7200초) 후에 자동으로 언뮤트
     await asyncio.sleep(7200)
@@ -626,16 +625,45 @@ async def mute_user(member: disnake.Member, guild: disnake.Guild):
     updated_member = guild.get_member(member.id)
     if updated_member and mute_role in updated_member.roles:
         await unmute_user(updated_member, guild)
+"""
 
+async def mute_user(member: disnake.Member, guild: disnake.Guild):
+    try:
+        mute_role = guild.get_role(MUTE_ROLE_ID)
+        if not mute_role:
+            return
+
+        if mute_role in member.roles:
+            return
+
+        # 사용자의 현재 역할 저장
+        banned_words_data["user_roles"][str(member.id)] = [role.id for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
+        save_banned_words(banned_words_data)
+
+        # 모든 역할 제거 후 뮤트 역할 추가
+        roles_to_remove = [role for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
+        await member.remove_roles(*roles_to_remove, reason="Mute")
+        await member.add_roles(mute_role)
+
+        # 2시간(7200초) 후에 자동으로 언뮤트
+        await asyncio.sleep(7200)
+
+        # 멤버가 여전히 서버에 있고, 여전히 뮤트 상태인지 확인
+        updated_member = guild.get_member(member.id)
+        if updated_member and mute_role in updated_member.roles:
+            await unmute_user(updated_member, guild)
+
+    except disnake.Forbidden:
+        print(f"봇에게 {member}를 뮤트할 권한이 없습니다.")
+    except Exception as e:
+        print(f"{member} 뮤트 중 오류 발생: {str(e)}")
 
 async def unmute_user(member: disnake.Member, guild: disnake.Guild):
     mute_role = guild.get_role(MUTE_ROLE_ID)
     if not mute_role:
-        print(f"Error: Muted role with ID {MUTE_ROLE_ID} not found in the guild.")
         return
 
     if mute_role not in member.roles:
-        print(f"{member.name} is not muted.")
         return
 
     # 뮤트 역할 제거
@@ -643,12 +671,9 @@ async def unmute_user(member: disnake.Member, guild: disnake.Guild):
 
     # 저장된 역할 복원
     if str(member.id) in banned_words_data["user_roles"]:
-        roles_to_add = [guild.get_role(role_id) for role_id in banned_words_data["user_roles"][str(member.id)] if
-                        guild.get_role(role_id) is not None]
+        roles_to_add = [guild.get_role(role_id) for role_id in banned_words_data["user_roles"][str(member.id)] if guild.get_role(role_id) is not None]
         await member.add_roles(*roles_to_add)
         del banned_words_data["user_roles"][str(member.id)]
         save_banned_words(banned_words_data)
-
-    print(f"{member.name} has been unmuted and roles have been restored.")
 
 bot.run(BOT_TOKEN)
