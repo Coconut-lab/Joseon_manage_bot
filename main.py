@@ -12,7 +12,9 @@ from roblox import Client
 from dotenv import load_dotenv
 import asyncio
 import json
+import re
 import os
+
 
 
 load_dotenv()
@@ -27,7 +29,6 @@ bot = commands.InteractionBot(intents=intents)
 TARGET_GUILD_ID = 612989092443062278
 # TARGET_GUILD_ID = 874913710777466891 # 테스트
 
-BANNED_WORDS_FILE = "badwords.json"
 
 MUTE_ROLE_ID = 795147706237714433
 # MUTE_ROLE_ID = 1272135394669891621 # 테스트
@@ -88,27 +89,69 @@ RGO_ROLES = {
     1: "보충병"
 }
 
+
 def load_banned_words():
     try:
         with open(BANNED_WORDS_FILE, "r", encoding="utf-8") as file:
-            data = json.load(file)
+            content = file.read()
+            if not content.strip():  # 파일이 비어있는 경우
+                return {"words": {}, "restricted_users": [], "user_roles": {}}
+
+            data = json.loads(content)
+            words = data.get("words", {})
+
+            # 각 단어에 대해 정규표현식 패턴 생성
+            for word, info in list(words.items()):  # list()를 사용하여 순회 중 수정 가능하게 함
+                try:
+                    if isinstance(info, dict):
+                        if 'pattern_str' not in info:
+                            info['pattern_str'] = r'\b' + r'\s*'.join(re.escape(char) for char in word) + r'\b'
+                    else:
+                        words[word] = {
+                            "added_by": "Unknown",
+                            "added_at": "Unknown",
+                            "pattern_str": r'\b' + r'\s*'.join(re.escape(char) for char in word) + r'\b'
+                        }
+
+                    words[word]['pattern'] = re.compile(words[word]['pattern_str'], re.IGNORECASE)
+                except Exception as e:
+                    del words[word]
+
             return {
-                "words": data.get("words", {}),
+                "words": words,
                 "restricted_users": data.get("restricted_users", []),
                 "user_roles": data.get("user_roles", {})
             }
     except FileNotFoundError:
         return {"words": {}, "restricted_users": [], "user_roles": {}}
+    except json.JSONDecodeError:
+        return {"words": {}, "restricted_users": [], "user_roles": {}}
+    except Exception as e:
+        return {"words": {}, "restricted_users": [], "user_roles": {}}
 
-def save_banned_words(words):
-    with open(BANNED_WORDS_FILE, "w", encoding="utf-8") as file:
-        json.dump(words, file, ensure_ascii=False, indent=4)
 
+BANNED_WORDS_FILE = "badwords.json"
 banned_words_data = load_banned_words()
+
+def save_banned_words(data):
+    serializable_data = {
+        "words": {
+            word: {
+                "added_by": info["added_by"],
+                "added_at": info["added_at"],
+                "pattern_str": info["pattern_str"]
+            } for word, info in data["words"].items()
+        },
+        "restricted_users": data["restricted_users"],
+        "user_roles": data["user_roles"]
+    }
+    with open(BANNED_WORDS_FILE, "w", encoding="utf-8") as file:
+        json.dump(serializable_data, file, ensure_ascii=False, indent=4)
+
 
 @bot.event
 async def on_ready():
-    print("Bot is ready!")
+    print("Bot is Ready!")
 
 @bot.event
 async def on_message(message):
@@ -125,8 +168,8 @@ async def on_message(message):
         content = message.content
 
         if message.author.id in banned_words_data["restricted_users"]:
-            for word in banned_words_data["words"]:
-                if word in content.split():
+            for word, info in banned_words_data["words"].items():
+                if re.search(info['pattern'], content):
                     await message.channel.send(f"{message.author.mention}, 입을 잘못 놀리셔서 꼬메버렸슈다")
                     await message.delete()
                     await mute_user(message.author, message.guild)
@@ -137,7 +180,7 @@ async def on_message(message):
 
 @bot.slash_command()
 async def test(inter):
-    await inter.response.send_message("저 정신 꽈악 붙잡고 있어유")
+    await inter.response.send_message("저 정신 꽈악 붙잡고 있어유👨🏿‍🌾")
 
 @bot.slash_command(name="그룹명령어", description="그룹 관리 명령어 리스트")
 async def list(inter):
@@ -175,12 +218,13 @@ async def list(inter):
         )
 
         # 임베드 필드
-        embed.add_field(name="금지어추가", value="금지어 한 단어를 추가합니다.", inline=False)
-        embed.add_field(name="금지어제거", value="금지어 목록 중에 한 단어를 제거합니다.", inline=False)
+        embed.add_field(name="금지어추가", value="금지어 단어를 추가합니다.", inline=False)
+        embed.add_field(name="금지어제거", value="금지어 목록 중에 있는 단어를 제거합니다.", inline=False)
         embed.add_field(name="금지어목록", value="금지어 목록을 확인합니다.", inline=False)
         embed.add_field(name="제한사용자추가", value="금지어 규칙이 적용될 사용자를 추가합니다.", inline=False)
         embed.add_field(name="제한사용자제거", value="금지어 규칙이 적용될 사용자를 제거합니다.", inline=False)
         embed.add_field(name="제한사용자목록", value="금지어 규칙이 적용된 사용자 목록을 확인합니다.", inline=False)
+        embed.add_field(name="뮤트해제", value="오직 **금지어**로 뮤트된 사람을 풀어줍니다.", inline=False)
 
         await inter.response.send_message(embed=embed)
 
@@ -479,9 +523,12 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
 
     for word in words:
         if word not in banned_words_data["words"]:
+            pattern_str = r'(?i)' + r'.*?'.join(re.escape(char) for char in word)
             banned_words_data["words"][word] = {
                 "added_by": str(inter.author),
-                "added_at": datetime.now().isoformat()
+                "added_at": datetime.now().isoformat(),
+                "pattern_str": pattern_str,
+                "pattern": re.compile(pattern_str)
             }
             added_words.append(word)
         else:
@@ -494,7 +541,6 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
         response += f"댕 금지어가 더 붙었어유: {', '.join(added_words)}\n"
     if already_exists:
         response += f"댕 단어는 벌써 금지어 목록에 있어유: {', '.join(already_exists)}"
-
     if not response:
         response = "더 붙은 금지어가 읎습니다유"
 
@@ -599,33 +645,6 @@ async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, e
         await inter.response.send_message(message, ephemeral=True)
     else:
         await inter.followup.send(message, ephemeral=True)
-
-"""
-async def mute_user(member: disnake.Member, guild: disnake.Guild):
-    mute_role = guild.get_role(MUTE_ROLE_ID)
-    if not mute_role:
-        return
-
-    if mute_role in member.roles:
-        return
-
-    # 사용자의 현재 역할 저장
-    banned_words_data["user_roles"][str(member.id)] = [role.id for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
-    save_banned_words(banned_words_data)
-
-    # 모든 역할 제거 후 뮤트 역할 추가
-    roles_to_remove = [role for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
-    await member.remove_roles(*roles_to_remove, reason="Mute")
-    await member.add_roles(mute_role)
-
-    # 2시간(7200초) 후에 자동으로 언뮤트
-    await asyncio.sleep(7200)
-
-    # 멤버가 여전히 서버에 있고, 여전히 뮤트 상태인지 확인
-    updated_member = guild.get_member(member.id)
-    if updated_member and mute_role in updated_member.roles:
-        await unmute_user(updated_member, guild)
-"""
 
 async def mute_user(member: disnake.Member, guild: disnake.Guild):
     try:
