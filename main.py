@@ -124,8 +124,6 @@ async def on_message(message):
                     await mute_user(message.author, message.guild)
                     return
 
-        await bot.process_commands(message)
-
     except Exception as e:
         await message.channel.send(f"메시지 처리 중 오류 발생: {str(e)}")
 
