@@ -515,7 +515,7 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름: str):
 
 
 @bot.slash_command(name="금지어추가", description="하나 이상의 금지어를 추가합니다. 여러 단어는 띄어쓰기로 구분합니다.")
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_any_role(ADMIN_ROLE_ID)
 async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어들: str):
     words = 단어들.split()
     added_words = []
@@ -547,7 +547,7 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
     await inter.response.send_message(response)
 
 @bot.slash_command(name="금지어제거", description="금지어를 제거합니다.")
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_any_role(ADMIN_ROLE_ID)
 async def remove_banned_word(inter: disnake.ApplicationCommandInteraction, 단어들: str):
     words = 단어들.split()
     removed_words = []
@@ -574,7 +574,7 @@ async def remove_banned_word(inter: disnake.ApplicationCommandInteraction, 단�
     await inter.response.send_message(response)
 
 @bot.slash_command(name="금지어목록", description="현재 금지어를 확인합니다.")
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_any_role(ADMIN_ROLE_ID)
 async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
     if banned_words_data["words"]:
         message = "현재 금지어 목록:\n"
@@ -598,7 +598,7 @@ async def add_restricted_user(inter: disnake.ApplicationCommandInteraction, 사�
         await inter.response.send_message(f"사용자 {사용자}은(는) 벌써 제한 목록에 들어 있습니다유")
 
 @bot.slash_command(name="제한사용자제거", description="금지어 규칙이 적용되는 사용자를 제거합니다.")
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_any_role(ADMIN_ROLE_ID)
 async def remove_restricted_user(inter: disnake.ApplicationCommandInteraction, 사용자: disnake.User):
     user_id = 사용자.id
     if user_id in banned_words_data["restricted_users"]:
@@ -609,7 +609,7 @@ async def remove_restricted_user(inter: disnake.ApplicationCommandInteraction, �
         await inter.response.send_message(f"사용자 {사용자}은(는) 제한 목록에 읎습니다유")
 
 @bot.slash_command(name="제한사용자목록", description="금지어 규칙이 적용되는 사용자 목록을 확인합니다.")
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_any_role(ADMIN_ROLE_ID)
 async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
     if banned_words_data["restricted_users"]:
         users = [await bot.fetch_user(user_id) for user_id in banned_words_data["restricted_users"]]
@@ -620,7 +620,7 @@ async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name="뮤트해제", description="특정 사용자의 뮤트를 해제합니다.")
-@commands.has_role(ADMIN_ROLE_ID)
+@commands.has_any_role(ADMIN_ROLE_ID)
 async def unmute(inter: disnake.ApplicationCommandInteraction, 멤버: disnake.Member):
     await inter.response.defer()
     await unmute_user(멤버, inter.guild)
