@@ -26,7 +26,7 @@ BOT_TOKEN = os.getenv("BOTTOKEN")
 intents = disnake.Intents.all()
 bot = commands.InteractionBot(intents=intents)
 
-TARGET_GUILD_ID = 612989092443062278
+TARGET_GUILD_ID = 612989092443062278, 868699445536124938
 # TARGET_GUILD_ID = 874913710777466891 # 테스트
 
 
