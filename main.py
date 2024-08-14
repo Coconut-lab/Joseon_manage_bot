@@ -372,7 +372,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
                     continue
 
                 group = await roblox_client.get_group(joseon_group_id)
-                group_member = await group.get_member(user.id)
+                group_member = group.get_member(user.id)
 
                 if group_member is None:
                     results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
