@@ -515,42 +515,45 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
 
 @bot.slash_command(name="호적승인", description="천민에서 상민으로 그룹 랭크 조정")
 @commands.has_role(695978137196036163)
-async def rank(inter: disnake.ApplicationCommandInteraction, 이름: str):
+async def rank(inter: disnake.ApplicationCommandInteraction, 이름들: str):
     await inter.response.defer()
-    text = 이름
-    try:
-        results = []
-        user = await roblox_client.get_user_by_username(text)
 
-        if user is None:
-            results.append(f"{text}은(는) 효도 없는 사용자명이여유")
-            await inter.followup.send("\n".join(results))
-            return
+    names = re.split(r'[/,\s]+', 이름들.strip())
+    names = [name for name in names if name]  # 빈 문자열 제거
 
-        group = await roblox_client.get_group(hanyang_group_id)
-        group_member = group.get_member(user.id)
+    results = []
 
-        if group_member is None:
-            results.append(f"{text}님은 그룹에 안 끼어 있구먼유")
-            await inter.followup.send("\n".join(results))
-            return
-
+    for name in names:
         try:
-            await group.set_rank(user.id, 20)
-            results.append(f"{text}님 랭크를 상민으로 바꿨구먼유")
+            user = await roblox_client.get_user_by_username(name)
+
+            if user is None:
+                results.append(f"{name}은(는) 효도 없는 사용자명이여유")
+                continue
+
+            group = await roblox_client.get_group(hanyang_group_id)
+            group_member = group.get_member(user.id)
+
+            if group_member is None:
+                results.append(f"{name}님은 그룹에 안 끼어 있구먼유")
+                continue
+
+            try:
+                await group.set_rank(user.id, 20)
+                results.append(f"{name}님 랭크를 상민으로 바꿨구먼유")
+            except Exception as e:
+                error_message = str(e)
+                if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                    results.append(f"{name}님은 벌써 상민이여유")
+                elif "401 Unauthorized" in error_message:
+                    results.append(f"{name}님은 벌써 상민 이상 랭크라서 바꿀 수 없구먼유")
+                else:
+                    results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
+
         except Exception as e:
-            error_message = str(e)
-            if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                results.append(f"{text}님은 벌써 상민이여유")
-            elif "401 Unauthorized" in error_message:
-                results.append(f"{text}님은 벌써 상민 이상 랭크라서 바꿀 수 없구먼유")
-            else:
-                raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
+            results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
 
-        await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
-
-    except Exception as e:
-        await inter.followup.send(f"오류가 발생했습니다: {str(e)}")
+    await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
 
 
 @bot.slash_command(name="금지어추가", description="하나 이상의 금지어를 추가합니다. 여러 단어는 띄어쓰기로 구분합니다.")
@@ -752,6 +755,18 @@ async def unmute_error(inter: disnake.ApplicationCommandInteraction, error: comm
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
     if isinstance(error, commands.MissingAnyRole):
+        message = "이런 심부름은 저의 주인님만 시킬 수 있어유"
+    else:
+        message = f"오류가 발생했습니다: {str(error)}"
+
+    if not inter.response.is_done():
+        await inter.response.send_message(message, ephemeral=True)
+    else:
+        await inter.followup.send(message, ephemeral=True)
+
+@bot.event
+async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
+    if isinstance(error, commands.MissingRole):
         message = "이런 심부름은 저의 주인님만 시킬 수 있어유"
     else:
         message = f"오류가 발생했습니다: {str(error)}"
