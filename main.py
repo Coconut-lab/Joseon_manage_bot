@@ -22,6 +22,7 @@ db = client["discord_bot_db"] # DB이름
 banned_words_collection = db["banned_words"]
 restricted_users_collection = db['restricted_users']
 user_roles_collection = db['user_roles']
+mute_logs_collection = db['mute_logs']
 
 roblox_client = Client(os.getenv("ROBLOXTOKEN"))
 BOT_TOKEN = os.getenv("BOTTOKEN")
@@ -37,7 +38,7 @@ TARGET_GUILD_ID = None
 MUTE_ROLE_ID = 795147706237714433
 # MUTE_ROLE_ID = 1272135394669891621 # 테스트
 ADMIN_ROLE_ID = [789359681776648202, 1185934968636067921, 1101725365342306415]
-# ADMIN_ROLE_ID = 1269948494551060561 # 테스트
+# ADMIN_ROLE_ID = [1101725365342306415] # 테스트
 MTA_RGO_MND = [597769848256200717, 1270777112982323274, 1270777180921528391, 1185934968636067921]
 MND_MTA = [597769848256200717, 1270777112982323274, 1185934968636067921]
 MND_RGO = [597769848256200717, 1270777180921528391]
@@ -193,7 +194,7 @@ async def on_message(message):
                 if re.search(info['pattern'], content):
                     await message.channel.send(f"{message.author.mention}, 입을 잘못 놀리셔서 꼬메버렸슈다")
                     await message.delete()
-                    await mute_user(message.author, message.guild)
+                    await mute_user(message.author, message.guild, content, word)
                     return
 
     except Exception as e:
@@ -745,6 +746,27 @@ async def unmute(inter: disnake.ApplicationCommandInteraction, 멤버: disnake.M
     await inter.followup.send(f"{멤버.mention}의 입막음이 풀렸습니다유")
 
 
+@bot.slash_command(name="뮤트로그", description="특정 사용자의 뮤트 로그를 확인합니다.")
+async def mute_logs(inter: disnake.ApplicationCommandInteraction, 멤버: disnake.Member):
+    if not any(role.id in ADMIN_ROLE_ID for role in inter.author.roles):
+        await inter.response.send_message("이런 심부름은 저의 주인님만 시킬 수 있어유", ephemeral=True)
+        return
+
+    logs = await mute_logs_collection.find({'user_id': 멤버.id}).sort('muted_at', -1).to_list(length=5)
+
+    if logs:
+        embed = disnake.Embed(title=f"{멤버.name}의 최근 뮤트 기록", color=disnake.Color.red())
+        for log in logs:
+            embed.add_field(
+                name=f"뮤트 일시: {log['muted_at'].strftime('%Y-%m-%d %H:%M:%S')}",
+                value=f"금지어: {log['banned_word']}\n내용: {log['content'][:100]}",
+                inline=False
+            )
+        await inter.response.send_message(embed=embed)
+    else:
+        await inter.response.send_message(f"{멤버.name}의 뮤트 기록이 없습니다유.")
+
+
 @unmute.error
 async def unmute_error(inter: disnake.ApplicationCommandInteraction, error: commands.CommandError):
     if isinstance(error, commands.MissingRole):
@@ -776,7 +798,7 @@ async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, e
     else:
         await inter.followup.send(message, ephemeral=True)
 
-async def mute_user(member: disnake.Member, guild: disnake.Guild):
+async def mute_user(member: disnake.Member, guild: disnake.Guild, content: str, banned_word: str):
     try:
         mute_role = guild.get_role(MUTE_ROLE_ID)
         if not mute_role:
@@ -797,6 +819,14 @@ async def mute_user(member: disnake.Member, guild: disnake.Guild):
         roles_to_remove = [role for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
         await member.remove_roles(*roles_to_remove, reason="Mute")
         await member.add_roles(mute_role)
+
+        await mute_logs_collection.insert_one({
+            'user_id': member.id,
+            'username': member.name,
+            'muted_at': datetime.now(),
+            'content': content,
+            'banned_word': banned_word
+        })
 
         # 2시간(7200초) 후에 자동으로 언뮤트
         await asyncio.sleep(7200)
