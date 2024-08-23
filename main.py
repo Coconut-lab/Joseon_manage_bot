@@ -11,22 +11,22 @@ from disnake.ext import commands
 from roblox import Client
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
+from datetime import datetime, timedelta
 import asyncio
 import re
 import os
 
 load_dotenv()
 
-client = AsyncIOMotorClient(os.getenv("DBCLIENT"))
-db = client["discord_bot_db"] # DB이름
+client = AsyncIOMotorClient(os.getenv("TESTDBCLIENT"))
+db = client["discord_bot_db"]  # DB이름
 banned_words_collection = db["banned_words"]
 restricted_users_collection = db['restricted_users']
 user_roles_collection = db['user_roles']
 mute_logs_collection = db['mute_logs']
 
 roblox_client = Client(os.getenv("ROBLOXTOKEN"))
-BOT_TOKEN = os.getenv("BOTTOKEN")
-
+BOT_TOKEN = os.getenv("TESTBOTTOKEN")
 
 intents = disnake.Intents.all()
 bot = commands.InteractionBot(intents=intents)
@@ -35,10 +35,10 @@ TARGET_GUILD_ID = None
 # TARGET_GUILD_ID = 874913710777466891 # 테스트
 
 
-MUTE_ROLE_ID = 795147706237714433
-# MUTE_ROLE_ID = 1272135394669891621 # 테스트
-ADMIN_ROLE_ID = [789359681776648202, 1185934968636067921, 1101725365342306415]
-# ADMIN_ROLE_ID = [1101725365342306415] # 테스트
+# MUTE_ROLE_ID = 795147706237714433
+MUTE_ROLE_ID = 1272135394669891621  # 테스트
+# ADMIN_ROLE_ID = [789359681776648202, 1185934968636067921, 1101725365342306415]
+ADMIN_ROLE_ID = [1101725365342306415]  # 테스트
 MTA_RGO_MND = [597769848256200717, 1270777112982323274, 1270777180921528391, 1185934968636067921]
 MND_MTA = [597769848256200717, 1270777112982323274, 1185934968636067921]
 MND_RGO = [597769848256200717, 1270777180921528391]
@@ -109,11 +109,14 @@ async def load_banned_words_from_db():
         }
     return banned_words
 
+
 async def load_restricted_users_from_db():
     return [user['user_id'] async for user in restricted_users_collection.find()]
 
+
 async def load_user_roles_from_db():
     return {str(user['user_id']): user['roles'] async for user in user_roles_collection.find()}
+
 
 async def save_banned_word_to_db(word, info):
     await banned_words_collection.update_one(
@@ -126,8 +129,10 @@ async def save_banned_word_to_db(word, info):
         upsert=True
     )
 
+
 def remove_banned_word_from_db(word):
     banned_words_collection.delete_one({'word': word})
+
 
 def save_restricted_user_to_db(user_id):
     restricted_users_collection.update_one(
@@ -136,8 +141,10 @@ def save_restricted_user_to_db(user_id):
         upsert=True
     )
 
+
 def remove_restricted_user_from_db(user_id):
     restricted_users_collection.delete_one({'user_id': user_id})
+
 
 def save_user_roles_to_db(user_id, roles):
     user_roles_collection.update_one(
@@ -146,8 +153,10 @@ def save_user_roles_to_db(user_id, roles):
         upsert=True
     )
 
+
 def remove_user_roles_from_db(user_id):
     user_roles_collection.delete_one({'user_id': user_id})
+
 
 # 초기 데이터 로드
 banned_words_data = {
@@ -172,6 +181,7 @@ def save_banned_words(data):
 @bot.event
 async def on_ready():
     print("Bot is Ready!")
+
 
 @bot.event
 async def on_message(message):
@@ -200,17 +210,19 @@ async def on_message(message):
     except Exception as e:
         await message.channel.send(f"메시지 처리 중 오류 발생: {str(e)}")
 
+
 @bot.slash_command()
 async def test(inter):
     await inter.response.send_message("저 정신 꽈악 붙잡고 있어유👨🏿‍🌾")
+
 
 @bot.slash_command(name="그룹명령어", description="그룹 관리 명령어 리스트")
 async def list(inter):
     try:
         # 임베드 헤더
         embed = disnake.Embed(
-            title = "명령어 리스트",
-            color = disnake.Color.dark_blue()
+            title="명령어 리스트",
+            color=disnake.Color.dark_blue()
         )
 
         # 임베드 필드
@@ -224,19 +236,19 @@ async def list(inter):
         embed.add_field(name="어영군랭크", value="어영군 그룹 랭크 번호 리스트 입니다.", inline=False)
         embed.add_field(name="호적승인", value="천민에서 상민으로 그룹 랭크 조정 **호조 권한**", inline=False)
 
-
         await inter.response.send_message(embed=embed)
 
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
 
 @bot.slash_command(name="금지어명령어", description="그룹 관리 명령어 리스트")
 async def list(inter):
     try:
         # 임베드 헤더
         embed = disnake.Embed(
-            title = "명령어 리스트",
-            color = disnake.Color.brand_red()
+            title="명령어 리스트",
+            color=disnake.Color.brand_red()
         )
 
         # 임베드 필드
@@ -253,19 +265,21 @@ async def list(inter):
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
 
+
 @bot.slash_command(name="설명서", description="기본적인 그룹 관리 명령어 설명서")
 async def manual(inter):
     try:
         # 임베드 헤더
         embed = disnake.Embed(
-            title = "설명서",
+            title="설명서",
             description="기본적인 그룹 관리 명령어를 알려드립니다.",
-            color = disnake.Color.yellow(),
+            color=disnake.Color.yellow(),
         )
 
         # 임베드 필드
         embed.add_field(name="조선(도감,어영)군관리 명령어", value="/조선(도감,어영)군관리 이름 랭크번호 / 이름2 랭크번호 ...", inline=False)
-        embed.add_field(name="조선(도감,어영)군랭크 명령어", value="각 그룹의 랭크 번호를 알려주는 명령어 입니다. 먼저 확인 후에 관리 명령어를 사용하세요.", inline=False)
+        embed.add_field(name="조선(도감,어영)군랭크 명령어", value="각 그룹의 랭크 번호를 알려주는 명령어 입니다. 먼저 확인 후에 관리 명령어를 사용하세요.",
+                        inline=False)
         embed.add_field(name="호적신고 명령어", value="호조만 사용할 수 있는 명령어로 로블록스 이름을 입력하면 해당 사람을 천민에서 상민으로 조정합니다.", inline=False)
 
         # 임베드 풋터
@@ -279,9 +293,9 @@ async def manual(inter):
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
 
+
 @bot.slash_command(name="조선군랭크", description="조선군 그룹 랭크 번호 리스트")
 async def list(inter):
-
     try:
         if not any(role.id in MTA_RGO_MND for role in inter.author.roles):
             await inter.response.send_message("이런 심부름은 저의 주인님만 시킬 수 있어유", ephemeral=True)
@@ -289,18 +303,18 @@ async def list(inter):
 
         # 임베드 헤더
         embed = disnake.Embed(
-            title = "랭크 번호 리스트",
-            color = disnake.Color.dark_gray()
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
         )
 
         for num, rank in sorted(RANK_ROLES.items(), reverse=True):
-            embed.add_field(name = num, value = rank, inline=True)
-
+            embed.add_field(name=num, value=rank, inline=True)
 
         await inter.response.send_message(embed=embed, ephemeral=True)
 
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
 
 @bot.slash_command(name="도감군랭크", description="도감군 그룹 랭크 번호 리스트")
 async def list(inter):
@@ -311,18 +325,18 @@ async def list(inter):
 
         # 임베드 헤더
         embed = disnake.Embed(
-            title = "랭크 번호 리스트",
-            color = disnake.Color.dark_gray()
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
         )
 
         for num, rank in sorted(MTA_ROLES.items(), reverse=True):
-            embed.add_field(name = num, value = rank, inline=True)
-
+            embed.add_field(name=num, value=rank, inline=True)
 
         await inter.response.send_message(embed=embed, ephemeral=True)
 
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
 
 @bot.slash_command(name="어영군랭크", description="어영군 그룹 랭크 번호 리스트")
 async def list(inter):
@@ -333,18 +347,18 @@ async def list(inter):
 
         # 임베드 헤더
         embed = disnake.Embed(
-            title = "랭크 번호 리스트",
-            color = disnake.Color.dark_gray()
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
         )
 
         for num, rank in sorted(RGO_ROLES.items(), reverse=True):
-            embed.add_field(name = num, value = rank, inline=True)
-
+            embed.add_field(name=num, value=rank, inline=True)
 
         await inter.response.send_message(embed=embed, ephemeral=True)
 
     except Exception as e:
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
 
 @bot.slash_command(name="조선군관리", description="다수 혹은 한명의 조선군 랭크를 관리하는 명령어")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
@@ -402,6 +416,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
+
 @bot.slash_command(name="도감군관리", description="다수 혹은 한명의 도감군 랭크를 관리하는 명령어")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
@@ -458,6 +473,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
+
 @bot.slash_command(name="어영군관리", description="다수 혹은 한명의 어영군 랭크를 관리하는 명령어")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
@@ -513,6 +529,7 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
         await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
 
 @bot.slash_command(name="호적승인", description="천민에서 상민으로 그룹 랭크 조정")
 @commands.has_role(695978137196036163)
@@ -598,6 +615,7 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
 
     await inter.response.send_message(response)
 
+
 @bot.slash_command(name="금지어제거", description="금지어를 제거합니다.")
 async def remove_banned_word(inter: disnake.ApplicationCommandInteraction, 단어들: str):
     if not any(role.id in ADMIN_ROLE_ID for role in inter.author.roles):
@@ -625,6 +643,7 @@ async def remove_banned_word(inter: disnake.ApplicationCommandInteraction, 단�
 
     await inter.response.send_message(response)
 
+
 @bot.slash_command(name="금지어목록", description="현재 금지어를 확인합니다.")
 async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
     if not any(role.id in ADMIN_ROLE_ID for role in inter.author.roles):
@@ -639,7 +658,7 @@ async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
                 message += f"- {word} (추가자: {info['added_by']}, 추가일: {info['added_at']})\n"
 
             if len(message) > 2000:
-                messages = [message[i:i+2000] for i in range(0, len(message), 2000)]
+                messages = [message[i:i + 2000] for i in range(0, len(message), 2000)]
                 await inter.response.send_message(messages[0])
                 for msg in messages[1:]:
                     await inter.followup.send(msg)
@@ -649,6 +668,7 @@ async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
             await inter.response.send_message("지금 금지어 목록이 텅 비었습니다유")
     except Exception as e:
         await inter.response.send_message(f"오류가 발생했습니다: {str(e)}")
+
 
 @bot.slash_command(name="제한사용자추가", description="금지어 규칙이 적용될 사용자를 추가합니다.")
 async def add_restricted_user(inter: disnake.ApplicationCommandInteraction, 사용자: disnake.User):
@@ -672,6 +692,7 @@ async def add_restricted_user(inter: disnake.ApplicationCommandInteraction, 사�
             await inter.response.send_message(f"사용자 {사용자}은(는) 벌써 제한 목록에 들어 있습니다유")
     except Exception as e:
         await inter.response.send_message(f"오류가 발생했습니다: {str(e)}")
+
 
 @bot.slash_command(name="제한사용자제거", description="금지어 규칙이 적용되는 사용자를 제거합니다.")
 async def remove_restricted_user(inter: disnake.ApplicationCommandInteraction, 사용자: disnake.User):
@@ -734,6 +755,32 @@ async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
         await inter.followup.send(f"오류가 발생했습니다: {str(e)}")
 
 
+@bot.slash_command(name="뮤트", description="특정 사용자를 뮤트합니다.")
+async def mute(
+        inter: disnake.ApplicationCommandInteraction,
+        멤버: disnake.Member,
+        뮤트시간: str,
+        사유: str
+):
+    await inter.response.defer()
+
+    if not any(role.id in ADMIN_ROLE_ID for role in inter.author.roles):
+        await inter.followup.send("이런 심부름은 저의 주인님만 시킬 수 있어유", ephemeral=True)
+        return
+
+    try:
+        duration = parse_duration(뮤트시간)
+        if duration is None:
+            await inter.followup.send("뮤트 시간 형식이 올바르지 않습니다. 예: 1h30m, 2d, 45m", ephemeral=True)
+            return
+
+        end_time = datetime.now() + duration
+        await mute_user_with_reason(멤버, inter.guild, 사유, end_time, inter.author)
+        await inter.followup.send(f"{멤버.mention}님을 {format_duration(duration)} 동안 뮤트했습니다. 사유: {사유}")
+
+    except Exception as e:
+        await inter.followup.send(f"뮤트 중 오류가 발생했습니다: {str(e)}", ephemeral=True)
+
 @bot.slash_command(name="뮤트해제", description="특정 사용자의 뮤트를 해제합니다.")
 async def unmute(inter: disnake.ApplicationCommandInteraction, 멤버: disnake.Member):
     await inter.response.defer()
@@ -757,11 +804,46 @@ async def mute_logs(inter: disnake.ApplicationCommandInteraction, 멤버: disnak
     if logs:
         embed = disnake.Embed(title=f"{멤버.name}의 최근 뮤트 기록", color=disnake.Color.red())
         for log in logs:
-            embed.add_field(
-                name=f"뮤트 일시: {log['muted_at'].strftime('%Y-%m-%d %H:%M:%S')}",
-                value=f"금지어: {log['banned_word']}\n내용: {log['content'][:100]}",
-                inline=False
-            )
+            muted_at = log['muted_at'].strftime('%Y-%m-%d %H:%M:%S')
+
+            # 뮤트 유형 확인 (일반 뮤트 또는 금지어 뮤트)
+            if 'banned_word' in log:
+                mute_type = "금지어 뮤트"
+                reason = f"금지어 사용: {log['banned_word']}"
+                muted_by = "자동 시스템 (금지어)"
+
+                embed.add_field(
+                    name=f"뮤트 일시: {muted_at} ({mute_type})",
+                    value=f"사유: {reason}\n"
+                          f"처리자: {muted_by}",
+                    inline=False
+                )
+            else:
+                mute_type = "일반 뮤트"
+                reason = log.get('reason', '알 수 없음')
+                end_time = log.get('end_time', None)
+                if end_time:
+                    end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+                    duration = log.get('duration', None)
+                    if duration is not None:
+                        duration = timedelta(seconds=duration)
+                        duration_str = format_duration(duration)
+                    else:
+                        duration_str = "알 수 없음"
+                else:
+                    end_time = "알 수 없음"
+                    duration_str = "알 수 없음"
+
+                muted_by = log.get('muted_by', {}).get('name', '알 수 없음')
+
+                embed.add_field(
+                    name=f"뮤트 일시: {muted_at} ({mute_type})",
+                    value=f"종료 시간: {end_time}\n"
+                          f"지속 시간: {duration_str}\n"
+                          f"사유: {reason}\n"
+                          f"처리자: {muted_by}",
+                    inline=False
+                )
         await inter.response.send_message(embed=embed)
     else:
         await inter.response.send_message(f"{멤버.name}의 뮤트 기록이 없습니다유.")
@@ -773,6 +855,7 @@ async def unmute_error(inter: disnake.ApplicationCommandInteraction, error: comm
         await inter.response.send_message("저의 주인님이 아니네유", ephemeral=True)
     else:
         await inter.response.send_message(f"오류가 발생했습니다: {str(error)}", ephemeral=True)
+
 
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
@@ -786,6 +869,7 @@ async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, e
     else:
         await inter.followup.send(message, ephemeral=True)
 
+
 @bot.event
 async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, error: Exception):
     if isinstance(error, commands.MissingRole):
@@ -797,6 +881,7 @@ async def on_slash_command_error(inter: disnake.ApplicationCommandInteraction, e
         await inter.response.send_message(message, ephemeral=True)
     else:
         await inter.followup.send(message, ephemeral=True)
+
 
 async def mute_user(member: disnake.Member, guild: disnake.Guild, content: str, banned_word: str):
     try:
@@ -841,6 +926,7 @@ async def mute_user(member: disnake.Member, guild: disnake.Guild, content: str, 
     except Exception as e:
         print(f"{member} 뮤트 중 오류 발생: {str(e)}")
 
+
 async def unmute_user(member: disnake.Member, guild: disnake.Guild):
     try:
         mute_role = guild.get_role(MUTE_ROLE_ID)
@@ -856,7 +942,8 @@ async def unmute_user(member: disnake.Member, guild: disnake.Guild):
         # 저장된 역할 복원
         user_roles = await user_roles_collection.find_one({'user_id': member.id})
         if user_roles:
-            roles_to_add = [guild.get_role(role_id) for role_id in user_roles['roles'] if guild.get_role(role_id) is not None]
+            roles_to_add = [guild.get_role(role_id) for role_id in user_roles['roles'] if
+                            guild.get_role(role_id) is not None]
             await member.add_roles(*roles_to_add)
             await user_roles_collection.delete_one({'user_id': member.id})
 
@@ -864,6 +951,98 @@ async def unmute_user(member: disnake.Member, guild: disnake.Guild):
         print(f"봇에게 {member}의 뮤트를 해제할 권한이 없습니다.")
     except Exception as e:
         print(f"{member} 뮤트 해제 중 오류 발생: {str(e)}", exc_info=True)
+
+
+async def schedule_unmute(member: disnake.Member, guild: disnake.Guild, end_time: datetime):
+    await asyncio.sleep((end_time - datetime.now()).total_seconds())
+    await unmute_user(member, guild)
+
+
+def parse_duration(duration_str: str) -> timedelta:
+    total_seconds = 0
+    current_number = ""
+    for char in duration_str:
+        if char.isdigit():
+            current_number += char
+        elif char in ['d', 'h', 'm']:
+            if not current_number:
+                return None
+            value = int(current_number)
+            if char == 'd':
+                total_seconds += value * 86400
+            elif char == 'h':
+                total_seconds += value * 3600
+            elif char == 'm':
+                total_seconds += value * 60
+            current_number = ""
+        else:
+            return None
+    return timedelta(seconds=total_seconds) if total_seconds > 0 else None
+
+
+def format_duration(duration: timedelta) -> str:
+    days, remainder = divmod(duration.total_seconds(), 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+
+    parts = []
+    if days > 0:
+        parts.append(f"{int(days)}일")
+    if hours > 0:
+        parts.append(f"{int(hours)}시간")
+    if minutes > 0:
+        parts.append(f"{int(minutes)}분")
+
+    return " ".join(parts) if parts else "1분 미만"
+
+
+async def mute_user_with_reason(member: disnake.Member, guild: disnake.Guild, reason: str, end_time: datetime,
+                                muted_by: disnake.Member):
+    try:
+        mute_role = guild.get_role(MUTE_ROLE_ID)
+        if not mute_role:
+            print("뮤트 역할을 찾을 수 없습니다.")
+            return
+
+        if mute_role in member.roles:
+            print(f"{member}는 이미 뮤트 상태입니다.")
+            return
+
+        # 사용자의 현재 역할 저장
+        current_roles = [role.id for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
+        await user_roles_collection.update_one(
+            {'user_id': member.id},
+            {'$set': {'roles': current_roles}},
+            upsert=True
+        )
+
+        # 모든 역할 제거 후 뮤트 역할 추가
+        roles_to_remove = [role for role in member.roles if role.id != guild.id and role.id != MUTE_ROLE_ID]
+        await member.remove_roles(*roles_to_remove, reason="Mute")
+        await member.add_roles(mute_role)
+
+        # 뮤트 로그 저장
+        await mute_logs_collection.insert_one({
+            'user_id': member.id,
+            'username': member.name,
+            'muted_at': datetime.now(),
+            'end_time': end_time,
+            'reason': reason,
+            'muted_by': {
+                'id': muted_by.id,
+                'name': muted_by.name
+            },
+            'duration': (end_time - datetime.now()).total_seconds()
+        })
+
+        # 뮤트 해제를 위한 태스크 생성
+        bot.loop.create_task(schedule_unmute(member, guild, end_time))
+
+    except disnake.Forbidden:
+        print(f"봇에게 {member}를 뮤트할 권한이 없습니다.")
+    except Exception as e:
+        print(f"{member} 뮤트 중 오류 발생: {str(e)}")
+
 
 if __name__ == "__main__":
     bot.run(BOT_TOKEN)
