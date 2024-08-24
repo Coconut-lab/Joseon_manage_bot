@@ -201,11 +201,12 @@ async def on_message(message):
         banned_words = await load_banned_words_from_db()
 
         if message.author.id in restricted_users:
-            for word, info in banned_words.items():
-                if re.search(info['pattern'], content):
+            for word_info in banned_words:
+                pattern = re.compile(word_info['pattern_str'], re.IGNORECASE)
+                if pattern.search(content):
                     await message.channel.send(f"{message.author.mention}, 입을 잘못 놀리셔서 꼬메버렸슈다")
                     await message.delete()
-                    await mute_user(message.author, message.guild, content, word)
+                    await mute_user(message.author, message.guild, content, word_info['word'])
                     return
 
     except Exception as e:
