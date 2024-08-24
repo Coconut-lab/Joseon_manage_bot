@@ -19,7 +19,7 @@ import os
 
 load_dotenv()
 
-client = AsyncIOMotorClient(os.getenv("TESTDBCLIENT"))
+client = AsyncIOMotorClient(os.getenv("REALDBCLIENT"))
 db = client["discord_bot_db"]  # DB이름
 banned_words_collection = db["banned_words"]
 restricted_users_collection = db['restricted_users']
@@ -100,14 +100,14 @@ RGO_ROLES = {
 
 
 async def load_banned_words_from_db():
-    banned_words = {}
+    banned_words = []
     async for word in banned_words_collection.find():
-        banned_words[word['word']] = {
+        banned_words.append({
+            'word': word['word'],
             'added_by': word['added_by'],
             'added_at': word['added_at'],
-            'pattern_str': word['pattern_str'],
-            'pattern': re.compile(word['pattern_str'])
-        }
+            'pattern_str': word['pattern_str']
+        })
     return banned_words
 
 
@@ -739,25 +739,64 @@ async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
     if not any(role.id in ADMIN_ROLE_ID for role in inter.author.roles):
         await inter.response.send_message("이런 심부름은 저의 주인님만 시킬 수 있어유", ephemeral=True)
         return
+
+    await inter.response.defer()
+
     try:
         banned_words = await load_banned_words_from_db()
 
         if banned_words:
-            message = "현재 금지어 목록:\n"
-            for word, info in banned_words.items():
-                message += f"- {word} (추가자: {info['added_by']}, 추가일: {info['added_at']})\n"
+            embeds = []
+            for i in range(0, len(banned_words), 5):  # 10개씩 표시
+                embed = disnake.Embed(title="현재 금지어 목록", color=disnake.Color.red())
+                embed.set_footer(text=f"페이지 {i // 5 + 1}/{-(-len(banned_words) // 5)}")
 
-            if len(message) > 2000:
-                messages = [message[i:i + 2000] for i in range(0, len(message), 2000)]
-                await inter.response.send_message(messages[0])
-                for msg in messages[1:]:
-                    await inter.followup.send(msg)
-            else:
-                await inter.response.send_message(message)
+                for j, word_info in enumerate(banned_words[i:i + 5], 1):
+                    added_by = await bot.fetch_user(int(word_info['added_by']))
+                    added_at = datetime.fromisoformat(word_info['added_at']).strftime('%Y-%m-%d %H:%M:%S')
+                    field_value = f"추가자: {added_by.name}\n추가일: {added_at}\n패턴: {word_info['pattern_str']}"
+                    embed.add_field(name=f"{i + j}. {word_info['word']}", value=field_value, inline=False)
+
+                embeds.append(embed)
+
+            class BannedWordsPaginator(disnake.ui.View):
+                def __init__(self, embeds, author):
+                    super().__init__(timeout=60)
+                    self.embeds = embeds
+                    self.index = 0
+                    self.author = author
+
+                @disnake.ui.button(label="이전", style=disnake.ButtonStyle.blurple)
+                async def previous(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+                    if interaction.user.id != self.author.id:
+                        await interaction.response.send_message("이 버튼은 명령어를 사용한 사람만 누를 수 있습니다.", ephemeral=True)
+                        return
+                    if self.index > 0:
+                        self.index -= 1
+                        await interaction.response.edit_message(embed=self.embeds[self.index])
+
+                @disnake.ui.button(label="다음", style=disnake.ButtonStyle.blurple)
+                async def next(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+                    if interaction.user.id != self.author.id:
+                        await interaction.response.send_message("이 버튼은 명령어를 사용한 사람만 누를 수 있습니다.", ephemeral=True)
+                        return
+                    if self.index < len(self.embeds) - 1:
+                        self.index += 1
+                        await interaction.response.edit_message(embed=self.embeds[self.index])
+
+                @disnake.ui.button(label="삭제", style=disnake.ButtonStyle.red)
+                async def delete(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+                    if interaction.user.id != self.author.id:
+                        await interaction.response.send_message("이 버튼은 명령어를 사용한 사람만 누를 수 있습니다.", ephemeral=True)
+                        return
+                    await interaction.message.delete()
+
+            paginator = BannedWordsPaginator(embeds, inter.author)
+            await inter.followup.send(embed=embeds[0], view=paginator)
         else:
-            await inter.response.send_message("지금 금지어 목록이 텅 비었습니다유")
+            await inter.followup.send("지금 금지어 목록이 텅 비었습니다유")
     except Exception as e:
-        await inter.response.send_message(f"오류가 발생했습니다: {str(e)}")
+        await inter.followup.send(f"오류가 발생했습니다: {str(e)}")
 
 
 @bot.slash_command(name="제한사용자추가", description="금지어 규칙이 적용될 사용자를 추가합니다.")
@@ -805,40 +844,57 @@ async def list_restricted_users(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message("이런 심부름은 저의 주인님만 시킬 수 있어유", ephemeral=True)
         return
 
-    try:
-        # 응답을 지연시킵니다.
-        await inter.response.defer()
+    await inter.response.defer()
 
-        restricted_users = await restricted_users_collection.find().to_list(length=None)
+    try:
+        restricted_users = await load_restricted_users_from_db()
 
         if restricted_users:
-            users = []
-            for user_data in restricted_users:
-                user_id = user_data.get('user_id')
-                if user_id is None:
-                    continue  # user_id가 없으면 건너뜁니다.
+            embeds = []
+            for i in range(0, len(restricted_users), 10):  # 10명씩 표시
+                embed = disnake.Embed(title="제한된 사용자 목록", color=disnake.Color.red())
+                embed.set_footer(text=f"페이지 {i // 10 + 1}/{-(-len(restricted_users) // 10)}")
 
-                # Int64나 다른 타입을 정수로 변환
-                user_id = int(user_id)
-
-                try:
+                for j, user_id in enumerate(restricted_users[i:i + 10], 1):
                     user = await bot.fetch_user(user_id)
-                    users.append(f"- {user.name} (ID: {user_id})")
-                except disnake.NotFound:
-                    users.append(f"- 알 수 없는 사용자 (ID: {user_id})")
-                except Exception as e:
-                    users.append(f"- 오류 발생한 사용자 (ID: {user_id})")
+                    embed.add_field(name=f"{i + j}. {user.name}", value=f"ID: {user_id}", inline=False)
 
-            message = "지금 막아놓은 사람들 목록:\n" + "\n".join(users)
+                embeds.append(embed)
 
-            # 메시지가 2000자를 넘으면 여러 메시지로 나누어 보냅니다.
-            if len(message) > 2000:
-                messages = [message[i:i + 2000] for i in range(0, len(message), 2000)]
-                await inter.followup.send(messages[0])
-                for msg in messages[1:]:
-                    await inter.followup.send(msg)
-            else:
-                await inter.followup.send(message)
+            class RestrictedUsersPaginator(disnake.ui.View):
+                def __init__(self, embeds, author):
+                    super().__init__(timeout=60)
+                    self.embeds = embeds
+                    self.index = 0
+                    self.author = author
+
+                @disnake.ui.button(label="이전", style=disnake.ButtonStyle.gray)
+                async def previous(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+                    if interaction.user.id != self.author.id:
+                        await interaction.response.send_message("이 버튼은 명령어를 사용한 사람만 누를 수 있습니다.", ephemeral=True)
+                        return
+                    if self.index > 0:
+                        self.index -= 1
+                        await interaction.response.edit_message(embed=self.embeds[self.index])
+
+                @disnake.ui.button(label="다음", style=disnake.ButtonStyle.gray)
+                async def next(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+                    if interaction.user.id != self.author.id:
+                        await interaction.response.send_message("이 버튼은 명령어를 사용한 사람만 누를 수 있습니다.", ephemeral=True)
+                        return
+                    if self.index < len(self.embeds) - 1:
+                        self.index += 1
+                        await interaction.response.edit_message(embed=self.embeds[self.index])
+
+                @disnake.ui.button(label="삭제", style=disnake.ButtonStyle.red)
+                async def delete(self, button: disnake.ui.Button, interaction: disnake.MessageInteraction):
+                    if interaction.user.id != self.author.id:
+                        await interaction.response.send_message("이 버튼은 명령어를 사용한 사람만 누를 수 있습니다.", ephemeral=True)
+                        return
+                    await interaction.message.delete()
+
+            paginator = RestrictedUsersPaginator(embeds, inter.author)
+            await inter.followup.send(embed=embeds[0], view=paginator)
         else:
             await inter.followup.send("지금 막아놓은 사람이 한 명도 읎습니다유")
     except Exception as e:
