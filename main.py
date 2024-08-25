@@ -2,8 +2,6 @@
 구현할 기능
 로블록스 자동 그룹 관리 기능 - 완성
 금지어 - 완성
-특정 채널에 올라오는 메세지를 Airtable에 기록하는 기능
-게임 오류 제보 기능
 """
 from datetime import datetime
 import disnake
@@ -36,8 +34,8 @@ TARGET_GUILD_ID = None
 # TARGET_GUILD_ID = 874913710777466891 # 테스트
 
 
-MUTE_ROLE_ID = 795147706237714433
-# MUTE_ROLE_ID = 1272135394669891621  # 테스트
+# MUTE_ROLE_ID = 795147706237714433
+MUTE_ROLE_ID = 1272135394669891621  # 테스트
 ADMIN_ROLE_ID = [789359681776648202, 1185934968636067921, 1101725365342306415]
 # ADMIN_ROLE_ID = [1101725365342306415]  # 테스트
 MTA_RGO_MND = [597769848256200717, 1270777112982323274, 1270777180921528391, 1185934968636067921]
@@ -106,7 +104,6 @@ async def load_banned_words_from_db():
             'word': word['word'],
             'added_by': word['added_by'],
             'added_at': word['added_at'],
-            'pattern_str': word['pattern_str']
         })
     return banned_words
 
@@ -124,8 +121,7 @@ async def save_banned_word_to_db(word, info):
         {'word': word},
         {'$set': {
             'added_by': info['added_by'],
-            'added_at': info['added_at'],
-            'pattern_str': info['pattern_str']
+            'added_at': info['added_at']
         }},
         upsert=True
     )
@@ -202,8 +198,7 @@ async def on_message(message):
 
         if message.author.id in restricted_users:
             for word_info in banned_words:
-                pattern = re.compile(word_info['pattern_str'], re.IGNORECASE)
-                if pattern.search(content):
+                if word_info['word'] in content:
                     await message.channel.send(f"{message.author.mention}, 입을 잘못 놀리셔서 꼬메버렸슈다")
                     await message.delete()
                     await mute_user(message.author, message.guild, content, word_info['word'])
@@ -679,12 +674,10 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
         # 데이터베이스에서 단어 검색
         existing_word = await banned_words_collection.find_one({'word': word})
         if not existing_word:
-            pattern_str = r'(?i)' + r'.*?'.join(re.escape(char) for char in word)
             info = {
                 "word": word,
                 "added_by": str(inter.author.id),
                 "added_at": datetime.now().isoformat(),
-                "pattern_str": pattern_str
             }
             # MongoDB에 저장
             await banned_words_collection.update_one(
@@ -755,7 +748,7 @@ async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
                 for j, word_info in enumerate(banned_words[i:i + 5], 1):
                     added_by = await bot.fetch_user(int(word_info['added_by']))
                     added_at = datetime.fromisoformat(word_info['added_at']).strftime('%Y-%m-%d %H:%M:%S')
-                    field_value = f"추가자: {added_by.name}\n추가일: {added_at}\n패턴: {word_info['pattern_str']}"
+                    field_value = f"추가자: {added_by.name}\n추가일: {added_at}"
                     embed.add_field(name=f"{i + j}. {word_info['word']}", value=field_value, inline=False)
 
                 embeds.append(embed)
