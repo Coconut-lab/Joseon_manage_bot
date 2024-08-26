@@ -19,7 +19,7 @@ import os
 
 load_dotenv()
 
-client = AsyncIOMotorClient(os.getenv("REALDBCLIENT"))
+client = AsyncIOMotorClient(os.getenv("TESTDBCLIENT"))
 db = client["discord_bot_db"]  # DB이름
 banned_words_collection = db["banned_words"]
 restricted_users_collection = db['restricted_users']
