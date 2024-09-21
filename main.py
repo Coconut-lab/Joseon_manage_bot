@@ -468,6 +468,44 @@ async def list(inter):
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
 
 
+@bot.slash_command(name="형조랭크", description="형조 그룹 랭크 번호 리스트")
+@commands.has_role(1285848601997742214)
+async def list(inter):
+    try:
+        # 임베드 헤더
+        embed = disnake.Embed(
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
+        )
+
+        for num, rank in sorted(JUSTICE_ROLES.items(), reverse=True):
+            embed.add_field(name=num, value=rank, inline=True)
+
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
+    except Exception as e:
+        await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
+
+@bot.slash_command(name="산적랭크", description="산적 그룹 랭크 번호 리스트")
+@commands.has_role(1273999512070783027)
+async def list(inter):
+    try:
+        # 임베드 헤더
+        embed = disnake.Embed(
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
+        )
+
+        for num, rank in sorted(BANDIT_ROLES.items(), reverse=True):
+            embed.add_field(name=num, value=rank, inline=True)
+
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
+    except Exception as e:
+        await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
+
 @bot.slash_command(name="조선군관리", description="다수 혹은 한명의 조선군 랭크를 관리하는 명령어")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
