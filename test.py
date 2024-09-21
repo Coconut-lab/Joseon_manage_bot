@@ -2,8 +2,6 @@
 구현할 기능
 로블록스 자동 그룹 관리 기능 - 완성
 금지어 - 완성
-특정 채널에 올라오는 메세지를 Airtable에 기록하는 기능
-게임 오류 제보 기능
 """
 from datetime import datetime
 import disnake
@@ -27,7 +25,7 @@ user_roles_collection = db['user_roles']
 mute_logs_collection = db['mute_logs']
 
 roblox_client = Client(os.getenv("ROBLOXTOKEN"))
-BOT_TOKEN = os.getenv("TESTBOTTOKEN")
+BOT_TOKEN = os.getenv("BOTTOKEN")
 
 intents = disnake.Intents.all()
 bot = commands.InteractionBot(intents=intents)
@@ -36,10 +34,10 @@ TARGET_GUILD_ID = None
 # TARGET_GUILD_ID = 874913710777466891 # 테스트
 
 
-# MUTE_ROLE_ID = 795147706237714433
-MUTE_ROLE_ID = 1272135394669891621  # 테스트
-# ADMIN_ROLE_ID = [789359681776648202, 1185934968636067921, 1101725365342306415]
-ADMIN_ROLE_ID = [1101725365342306415]  # 테스트
+MUTE_ROLE_ID = 795147706237714433
+# MUTE_ROLE_ID = 1272135394669891621  # 테스트
+ADMIN_ROLE_ID = [789359681776648202, 1185934968636067921, 1101725365342306415]
+# ADMIN_ROLE_ID = [1101725365342306415]  # 테스트
 MTA_RGO_MND = [597769848256200717, 1270777112982323274, 1270777180921528391, 1185934968636067921]
 MND_MTA = [597769848256200717, 1270777112982323274, 1185934968636067921]
 MND_RGO = [597769848256200717, 1270777180921528391]
@@ -48,6 +46,8 @@ joseon_group_id = "4654286"
 MTA_group_id = "4654485"
 RGO_group_id = "4654514"
 hanyang_group_id = "4766967"
+Justice_group_id = "5815247"
+Bandit_group_id = "8147242"
 
 RANK_ROLES = {
     96: "대장",
@@ -98,6 +98,24 @@ RGO_ROLES = {
     1: "보충병"
 }
 
+BANDIT_ROLES = {
+    1: "시정 무뢰배",
+    2: "산자락 들개",
+    4: "범바위 늑대",
+    30: "영은문 불한당",
+    38: "좌촌리 무쇠주먹",
+    40: "치마바위 올빼미",
+    50: "중앙군 변절자"
+}
+
+JUSTICE_ROLES = {
+    1: "[兵卒] 나장",
+    2: "[參下] 명률",
+    3: "[參下] 녹사",
+    4: "[參下] 서리",
+    7: "[參上] 좌랑",
+    11: "[參上] 정랑"
+}
 
 async def load_banned_words_from_db():
     banned_words = []
@@ -106,7 +124,6 @@ async def load_banned_words_from_db():
             'word': word['word'],
             'added_by': word['added_by'],
             'added_at': word['added_at'],
-            'pattern_str': word['pattern_str']
         })
     return banned_words
 
@@ -124,8 +141,7 @@ async def save_banned_word_to_db(word, info):
         {'word': word},
         {'$set': {
             'added_by': info['added_by'],
-            'added_at': info['added_at'],
-            'pattern_str': info['pattern_str']
+            'added_at': info['added_at']
         }},
         upsert=True
     )
@@ -201,11 +217,11 @@ async def on_message(message):
         banned_words = await load_banned_words_from_db()
 
         if message.author.id in restricted_users:
-            for word, info in banned_words.items():
-                if re.search(info['pattern'], content):
+            for word_info in banned_words:
+                if word_info['word'] in content:
                     await message.channel.send(f"{message.author.mention}, 입을 잘못 놀리셔서 꼬메버렸슈다")
                     await message.delete()
-                    await mute_user(message.author, message.guild, content, word)
+                    await mute_user(message.author, message.guild, content, word_info['word'])
                     return
 
     except Exception as e:
@@ -324,6 +340,8 @@ async def list(inter):
         embed.add_field(name="조선군랭크", value="조선군 그룹 랭크 번호 리스트 입니다.", inline=False)
         embed.add_field(name="도감군랭크", value="도감군 그룹 랭크 번호 리스트 입니다.", inline=False)
         embed.add_field(name="어영군랭크", value="어영군 그룹 랭크 번호 리스트 입니다.", inline=False)
+        embed.add_field(name="형조랭크", value="형조 그룹 랭크 번호 리스트 입니다.", inline=False)
+        embed.add_field(name="산적랭크", value="산적 그룹 랭크 번호 리스트 입니다.", inline=False)
         embed.add_field(name="호적승인", value="천민에서 상민으로 그룹 랭크 조정 **호조 권한**", inline=False)
 
         await inter.response.send_message(embed=embed)
@@ -664,6 +682,114 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름들: str):
     await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
 
 
+@bot.slash_command(name="형조관리", description="다수 혹은 한명의 형조 랭크를 관리하는 명령어")
+@commands.has_role(1285848601997742214)
+async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
+    await inter.response.defer()
+    try:
+        lines = 이름_랭크번호.split("/")
+        usernames = []
+        rank_numbers = []
+
+        for line in lines:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                usernames.append(parts[0])
+                rank_numbers.append(int(parts[1]))
+
+        results = []
+        for username, rank in zip(usernames, rank_numbers):
+            try:
+                user = await roblox_client.get_user_by_username(username)
+                if user is None:
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    continue
+
+                group = await roblox_client.get_group(Justice_group_id)
+                group_member = group.get_member(user.id)
+
+                if group_member is None:
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    continue
+
+                if rank in JUSTICE_ROLES:
+                    role = JUSTICE_ROLES[rank]
+                    try:
+                        await group.set_rank(user.id, rank)
+                        results.append(f"{username}님의 랭크를 {role}({rank})로 바꿨구먼유")
+                    except Exception as e:
+                        error_message = str(e)
+                        if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
+                        else:
+                            raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
+                else:
+                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
+
+            except Exception as e:
+                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+
+            await asyncio.sleep(0.5)  # API 요청 사이에 짧은 대기 시간 추가
+
+        await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
+    except Exception as e:
+        await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+
+@bot.slash_command(name="산적관리", description="다수 혹은 한명의 산적 랭크를 관리하는 명령어")
+@commands.has_role(1273999512070783027)
+async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
+    await inter.response.defer()
+    try:
+        lines = 이름_랭크번호.split("/")
+        usernames = []
+        rank_numbers = []
+
+        for line in lines:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                usernames.append(parts[0])
+                rank_numbers.append(int(parts[1]))
+
+        results = []
+        for username, rank in zip(usernames, rank_numbers):
+            try:
+                user = await roblox_client.get_user_by_username(username)
+                if user is None:
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    continue
+
+                group = await roblox_client.get_group(Bandit_group_id)
+                group_member = group.get_member(user.id)
+
+                if group_member is None:
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    continue
+
+                if rank in BANDIT_ROLES:
+                    role = BANDIT_ROLES[rank]
+                    try:
+                        await group.set_rank(user.id, rank)
+                        results.append(f"{username}님의 랭크를 {role}({rank})로 바꿨구먼유")
+                    except Exception as e:
+                        error_message = str(e)
+                        if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
+                        else:
+                            raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
+                else:
+                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
+
+            except Exception as e:
+                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+
+            await asyncio.sleep(0.5)  # API 요청 사이에 짧은 대기 시간 추가
+
+        await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
+    except Exception as e:
+        await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+
 @bot.slash_command(name="금지어추가", description="하나 이상의 금지어를 추가합니다. 여러 단어는 띄어쓰기로 구분합니다.")
 async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어들: str):
     if not any(role.id in ADMIN_ROLE_ID for role in inter.author.roles):
@@ -678,12 +804,10 @@ async def add_banned_words(inter: disnake.ApplicationCommandInteraction, 단어�
         # 데이터베이스에서 단어 검색
         existing_word = await banned_words_collection.find_one({'word': word})
         if not existing_word:
-            pattern_str = r'(?i)' + r'.*?'.join(re.escape(char) for char in word)
             info = {
                 "word": word,
                 "added_by": str(inter.author.id),
                 "added_at": datetime.now().isoformat(),
-                "pattern_str": pattern_str
             }
             # MongoDB에 저장
             await banned_words_collection.update_one(
@@ -754,7 +878,7 @@ async def list_banned_words(inter: disnake.ApplicationCommandInteraction):
                 for j, word_info in enumerate(banned_words[i:i + 5], 1):
                     added_by = await bot.fetch_user(int(word_info['added_by']))
                     added_at = datetime.fromisoformat(word_info['added_at']).strftime('%Y-%m-%d %H:%M:%S')
-                    field_value = f"추가자: {added_by.name}\n추가일: {added_at}\n패턴: {word_info['pattern_str']}"
+                    field_value = f"추가자: {added_by.name}\n추가일: {added_at}"
                     embed.add_field(name=f"{i + j}. {word_info['word']}", value=field_value, inline=False)
 
                 embeds.append(embed)
