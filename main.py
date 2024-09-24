@@ -774,6 +774,53 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
 
+@bot.slash_command(name="호조승인", description="호조 그룹 승인하는 명령어 입니다 (승인 1 / 거절 0)")
+@commands.has_role(1285848601997742214)
+async def group(inter: disnake.ApplicationCommandInteraction, 이름들: str):
+    await inter.response.defer()
+    try:
+        lines = 이름들.split("/")
+        usernames = []
+        acep_decli = []
+
+        for line in lines:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                usernames.append(parts[0])
+                acep_decli.append(int(parts[1]))
+
+        results = []
+        for username, action in zip(usernames, acep_decli):
+            try:
+                user = await roblox_client.get_user_by_username(username)
+                if user is None:
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    continue
+
+                group = await roblox_client.get_group(Justice_group_id)
+                group_member = group.get_member(user.id)
+
+                if group_member is None:
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    continue
+
+                if action == 1:
+                    await group.accept_user(user.id)
+                    results.append(f"{username}님을 그룹을 승인했어유")
+                elif action == 0:
+                    await group.decline_user(user.id)
+                    results.append(f"{username}님을 그룹을 거절했어유")
+                else:
+                    results.append(f"{username}님의 처리 중 오류: 유효하지 않은 액션 값 ({action}). 1(승인) 또는 0(거절)만 사용 가능합니다.")
+            except Exception as e:
+                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+
+        await inter.followup.send(f"### 완료!\n".join(results))
+
+    except Exception as e:
+        await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+
 @bot.slash_command(name="산적관리", description="다수 혹은 한명의 산적 랭크를 관리하는 명령어")
 @commands.has_role(1273999512070783027)
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
