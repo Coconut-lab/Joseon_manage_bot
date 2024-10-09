@@ -17,7 +17,7 @@ import os
 
 load_dotenv()
 
-client = AsyncIOMotorClient(os.getenv("TESTDBCLIENT"))
+client = AsyncIOMotorClient(os.getenv("DBCLIENT"))
 db = client["discord_bot_db"]  # DB이름
 banned_words_collection = db["banned_words"]
 restricted_users_collection = db['restricted_users']
@@ -48,6 +48,7 @@ RGO_group_id = "4654514"
 hanyang_group_id = "4766967"
 Justice_group_id = "5815247"
 Bandit_group_id = "8147242"
+Bobusang_group_id = "35042536"
 
 RANK_ROLES = {
     96: "대장",
@@ -468,6 +469,44 @@ async def list(inter):
         await inter.response.send_message(f"에러가 발생했습니다. {e}")
 
 
+@bot.slash_command(name="형조랭크", description="형조 그룹 랭크 번호 리스트")
+@commands.has_role(1285848601997742214)
+async def list(inter):
+    try:
+        # 임베드 헤더
+        embed = disnake.Embed(
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
+        )
+
+        for num, rank in sorted(JUSTICE_ROLES.items(), reverse=True):
+            embed.add_field(name=num, value=rank, inline=True)
+
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
+    except Exception as e:
+        await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
+
+@bot.slash_command(name="산적랭크", description="산적 그룹 랭크 번호 리스트")
+@commands.has_role(1273999512070783027)
+async def list(inter):
+    try:
+        # 임베드 헤더
+        embed = disnake.Embed(
+            title="랭크 번호 리스트",
+            color=disnake.Color.dark_gray()
+        )
+
+        for num, rank in sorted(BANDIT_ROLES.items(), reverse=True):
+            embed.add_field(name=num, value=rank, inline=True)
+
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
+    except Exception as e:
+        await inter.response.send_message(f"에러가 발생했습니다. {e}")
+
+
 @bot.slash_command(name="조선군관리", description="다수 혹은 한명의 조선군 랭크를 관리하는 명령어")
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
     await inter.response.defer()
@@ -646,7 +685,6 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름들: str):
 
     names = re.split(r'[/,\s]+', 이름들.strip())
     names = [name for name in names if name]  # 빈 문자열 제거
-
     results = []
 
     for name in names:
@@ -736,6 +774,53 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
 
+@bot.slash_command(name="형조승인", description="형조 그룹 승인하는 명령어 입니다 (승인 1 / 거절 0)")
+@commands.has_role(1285848601997742214)
+async def group(inter: disnake.ApplicationCommandInteraction, 이름들: str):
+    await inter.response.defer()
+    try:
+        lines = 이름들.split("/")
+        usernames = []
+        acep_decli = []
+
+        for line in lines:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                usernames.append(parts[0])
+                acep_decli.append(int(parts[1]))
+
+        results = []
+        for username, action in zip(usernames, acep_decli):
+            try:
+                user = await roblox_client.get_user_by_username(username)
+                if user is None:
+                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    continue
+
+                group = await roblox_client.get_group(Justice_group_id)
+                group_member = group.get_member(user.id)
+
+                if group_member is None:
+                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    continue
+
+                if action == 1:
+                    await group.accept_user(user.id)
+                    results.append(f"{username}님을 그룹을 승인했어유")
+                elif action == 0:
+                    await group.decline_user(user.id)
+                    results.append(f"{username}님을 그룹을 거절했어유")
+                else:
+                    results.append(f"{username}님의 처리 중 오류: 유효하지 않은 액션 값 ({action}). 1(승인) 또는 0(거절)만 사용 가능합니다.")
+            except Exception as e:
+                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+
+        await inter.followup.send(f"### 완료!\n".join(results))
+
+    except Exception as e:
+        await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+
 @bot.slash_command(name="산적관리", description="다수 혹은 한명의 산적 랭크를 관리하는 명령어")
 @commands.has_role(1273999512070783027)
 async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크번호: str):
@@ -788,6 +873,69 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
         await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+
+@bot.slash_command(name="산적추방", description="다수 혹은 한명의 유저를 산적 그룹으로 부터 추방하는 명령어")
+@commands.has_role(1273999512070783027)
+async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름들: str):
+    await inter.response.defer()
+    try:
+        names = re.split(r'[/,\s]+', 이름들.strip())
+        names = [name for name in names if name]  # 빈 문자열 제거
+        results = []
+
+        for name in names:
+            try:
+                user = await roblox_client.get_user_by_username(name)
+
+                if user is None:
+                    results.append(f"{name}은(는) 유효하지 않은 사용자명이여유")
+                    continue
+
+                bandit_group = await roblox_client.get_group(Bandit_group_id)
+                bobusang_group = await roblox_client.get_group(Bobusang_group_id)
+
+                bandit_member = bandit_group.get_member(user.id) if bandit_group else None
+                bobusang_member = bobusang_group.get_member(user.id) if bobusang_group else None
+
+                if bandit_member is None and bobusang_member is None:
+                    results.append(f"{name}님은 산적과 보부상 그룹 둘 다에 속해있지 않구먼유")
+                    continue
+
+                action_taken = False
+
+                if bandit_member:
+                    try:
+                        await bandit_group.set_rank(user.id, 1)
+                        results.append(f"{name}님을 시정무뢰배로 내렸어유")
+                        action_taken = True
+                    except Exception as e:
+                        error_message = str(e)
+                        if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                            results.append(f"{name}님은 이미 시정무뢰배이여유")
+                        elif "401 Unauthorized" in error_message:
+                            results.append(f"{name}님은 이미 시정무뢰배 이상 랭크라서 내릴 수 없구먼유")
+                        else:
+                            results.append(f"{name}님 산적 그룹 처리 중 오류 발생: {str(e)}")
+
+                if bobusang_member:
+                    try:
+                        await bobusang_group.kick_user(user.id)
+                        results.append(f"{name}님을 보부상에서 추방했어유")
+                        action_taken = True
+                    except Exception as e:
+                        results.append(f"{name}님 보부상 그룹 처리 중 오류 발생: {str(e)}")
+
+                if not action_taken:
+                    results.append(f"{name}님에 대한 처리를 수행하지 못했어유")
+
+            except Exception as e:
+                results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
+
+    except Exception as e:
+        await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+    await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
 
 
 @bot.slash_command(name="금지어추가", description="하나 이상의 금지어를 추가합니다. 여러 단어는 띄어쓰기로 구분합니다.")

@@ -890,34 +890,47 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름들: str)
 
                 if user is None:
                     results.append(f"{name}은(는) 효도 없는 사용자명이여유")
+                    results.append(f"{name}은(는) 유효하지 않은 사용자명이여유")
                     continue
 
                 bandit_group = await roblox_client.get_group(Bandit_group_id)
                 bobusang_group = await roblox_client.get_group(Bobusang_group_id)
 
-                bandit_member = bandit_group.get_member(user.id)
-                bobusang_member = bobusang_group.get_member(user.id)
+                bandit_member = bandit_group.get_member(user.id) if bandit_group else None
+                bobusang_member = bobusang_group.get_member(user.id) if bobusang_group else None
 
-                if bandit_member is None:
                     results.append(f"{name}님은 산적 그룹에 안 끼어 있구먼유")
+                if bandit_member is None and bobusang_member is None:
+                    results.append(f"{name}님은 산적과 보부상 그룹 둘 다에 속해있지 않구먼유")
                     continue
 
-                if bobusang_member is None:
-                    results.append(f"{name}님은 보부상 그룹에 안 끼어 있구먼유")
-                    continue
+                action_taken = False
 
-                try:
-                    await bandit_group.set_rank(user.id, 1)
-                    await bobusang_group.kick_user(user.id)
-                    results.append(f"{name}님을 시정무뢰배로 내리고 보부상에서 추방했어유")
-                except Exception as e:
-                    error_message = str(e)
-                    if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                        results.append(f"{name}님은 이미 시정무뢰배이여유")
-                    elif "401 Unauthorized" in error_message:
-                        results.append(f"{name}님은 이미 시정무뢰배 이상 랭크라서 내릴 수 없구먼유")
-                    else:
-                        results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
+                if bandit_member:
+                    try:
+                        await bandit_group.set_rank(user.id, 1)
+                        results.append(f"{name}님을 시정무뢰배로 내렸어유")
+                        action_taken = True
+                    except Exception as e:
+                        error_message = str(e)
+                        if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                            results.append(f"{name}님은 이미 시정무뢰배이여유")
+                        elif "401 Unauthorized" in error_message:
+                            results.append(f"{name}님은 이미 시정무뢰배 이상 랭크라서 내릴 수 없구먼유")
+                        else:
+                            results.append(f"{name}님 산적 그룹 처리 중 오류 발생: {str(e)}")
+
+                if bobusang_member:
+                    try:
+                        await bobusang_group.kick_user(user.id)
+                        results.append(f"{name}님을 보부상에서 추방했어유")
+                        action_taken = True
+                    except Exception as e:
+                        results.append(f"{name}님 보부상 그룹 처리 중 오류 발생: {str(e)}")
+
+                if not action_taken:
+                    results.append(f"{name}님에 대한 처리를 수행하지 못했어유")
+
             except Exception as e:
                 results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
 
