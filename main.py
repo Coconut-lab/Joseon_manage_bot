@@ -889,7 +889,6 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름들: str)
                 user = await roblox_client.get_user_by_username(name)
 
                 if user is None:
-                    results.append(f"{name}은(는) 효도 없는 사용자명이여유")
                     results.append(f"{name}은(는) 유효하지 않은 사용자명이여유")
                     continue
 
@@ -899,7 +898,6 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름들: str)
                 bandit_member = bandit_group.get_member(user.id) if bandit_group else None
                 bobusang_member = bobusang_group.get_member(user.id) if bobusang_group else None
 
-                    results.append(f"{name}님은 산적 그룹에 안 끼어 있구먼유")
                 if bandit_member is None and bobusang_member is None:
                     results.append(f"{name}님은 산적과 보부상 그룹 둘 다에 속해있지 않구먼유")
                     continue
