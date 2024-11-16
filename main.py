@@ -692,30 +692,30 @@ async def rank(inter: disnake.ApplicationCommandInteraction, 이름들: str):
             user = await roblox_client.get_user_by_username(name)
 
             if user is None:
-                results.append(f"{name}은(는) 효도 없는 사용자명이여유")
+                results.append(f"{name} 은(는) 효도 없는 사용자명이여유")
                 continue
 
             group = await roblox_client.get_group(hanyang_group_id)
             group_member = group.get_member(user.id)
 
             if group_member is None:
-                results.append(f"{name}님은 그룹에 안 끼어 있구먼유")
+                results.append(f"{name} 님은 그룹에 안 끼어 있구먼유")
                 continue
 
             try:
                 await group.set_rank(user.id, 20)
-                results.append(f"{name}님 랭크를 상민으로 바꿨구먼유")
+                results.append(f"{name} 님 랭크를 상민으로 바꿨구먼유")
             except Exception as e:
                 error_message = str(e)
                 if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                    results.append(f"{name}님은 벌써 상민이여유")
+                    results.append(f"{name} 님은 벌써 상민이여유")
                 elif "401 Unauthorized" in error_message:
-                    results.append(f"{name}님은 벌써 상민 이상 랭크라서 바꿀 수 없구먼유")
+                    results.append(f"{name} 님은 벌써 상민 이상 랭크라서 바꿀 수 없구먼유")
                 else:
-                    results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
+                    results.append(f"{name} 님 처리 중 오류 발생: {str(e)}")
 
         except Exception as e:
-            results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
+            results.append(f"{name} 님 처리 중 오류 발생: {str(e)}")
 
     await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
 
@@ -740,14 +740,14 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
             try:
                 user = await roblox_client.get_user_by_username(username)
                 if user is None:
-                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    results.append(f"{username} 은(는) 효도 없는 사용자명이여유")
                     continue
 
                 group = await roblox_client.get_group(Justice_group_id)
                 group_member = group.get_member(user.id)
 
                 if group_member is None:
-                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    results.append(f"{username} 님은 그룹에 안 끼어 있구먼유")
                     continue
 
                 if rank in JUSTICE_ROLES:
@@ -758,14 +758,14 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
                     except Exception as e:
                         error_message = str(e)
                         if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
+                            results.append(f"{username} 님은 벌써 {role}({rank}) 랭크여유")
                         else:
                             raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
                 else:
-                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
+                    results.append(f"{username} 님한테 없는 랭크({rank})를 지정해 놨구먼유")
 
             except Exception as e:
-                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+                results.append(f"{username} 님 처리 중 오류 발생: {str(e)}")
 
             await asyncio.sleep(0.5)  # API 요청 사이에 짧은 대기 시간 추가
 
@@ -794,26 +794,26 @@ async def group(inter: disnake.ApplicationCommandInteraction, 이름들: str):
             try:
                 user = await roblox_client.get_user_by_username(username)
                 if user is None:
-                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    results.append(f"{username} 은(는) 효도 없는 사용자명이여유")
                     continue
 
                 group = await roblox_client.get_group(Justice_group_id)
                 group_member = group.get_member(user.id)
 
                 if group_member is None:
-                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    results.append(f"{username} 님은 그룹에 안 끼어 있구먼유")
                     continue
 
                 if action == 1:
                     await group.accept_user(user.id)
-                    results.append(f"{username}님을 그룹을 승인했어유")
+                    results.append(f"{username} 님을 그룹을 승인했어유")
                 elif action == 0:
                     await group.decline_user(user.id)
-                    results.append(f"{username}님을 그룹을 거절했어유")
+                    results.append(f"{username} 님을 그룹을 거절했어유")
                 else:
-                    results.append(f"{username}님의 처리 중 오류: 유효하지 않은 액션 값 ({action}). 1(승인) 또는 0(거절)만 사용 가능합니다.")
+                    results.append(f"{username} 님의 처리 중 오류: 유효하지 않은 액션 값 ({action}). 1(승인) 또는 0(거절)만 사용 가능합니다.")
             except Exception as e:
-                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+                results.append(f"{username} 님 처리 중 오류 발생: {str(e)}")
 
         await inter.followup.send(f"### 완료!\n".join(results))
 
@@ -841,38 +841,50 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름_랭크�
             try:
                 user = await roblox_client.get_user_by_username(username)
                 if user is None:
-                    results.append(f"{username}은(는) 효도 없는 사용자명이여유")
+                    results.append(f"{username} 은(는) 효도 없는 사용자명이여유")
                     continue
 
                 group = await roblox_client.get_group(Bandit_group_id)
                 group_member = group.get_member(user.id)
 
                 if group_member is None:
-                    results.append(f"{username}님은 그룹에 안 끼어 있구먼유")
+                    results.append(f"{username} 님은 그룹에 안 끼어 있구먼유")
                     continue
 
                 if rank in BANDIT_ROLES:
                     role = BANDIT_ROLES[rank]
                     try:
                         await group.set_rank(user.id, rank)
-                        results.append(f"{username}님의 랭크를 {role}({rank})로 바꿨구먼유")
+                        results.append(f"{username} 님의 랭크를 {role}({rank})로 바꿨구먼유")
                     except Exception as e:
                         error_message = str(e)
                         if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                            results.append(f"{username}님은 벌써 {role}({rank}) 랭크여유")
+                            results.append(f"{username} 님은 벌써 {role}({rank}) 랭크여유")
                         else:
                             raise  # 다른 종류의 오류라면 상위 예외 처리로 전달
                 else:
-                    results.append(f"{username}님한테 없는 랭크({rank})를 지정해 놨구먼유")
+                    results.append(f"{username} 님한테 없는 랭크({rank})를 지정해 놨구먼유")
 
             except Exception as e:
-                results.append(f"{username}님 처리 중 오류 발생: {str(e)}")
+                results.append(f"{username} 님 처리 중 오류 발생: {str(e)}")
 
             await asyncio.sleep(0.5)  # API 요청 사이에 짧은 대기 시간 추가
 
         await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
+
+        log_channel = bot.get_channel(1294914388637122570)
+
+        if log_channel:
+            await log_channel.send(f"{inter.user.mention}\n" + "\n".join(results))
+        else:
+            await inter.followup.send("로그 채널을 찾을 수 없어유")
+
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+        log_channel = bot.get_channel(1294914388637122570)
+        if log_channel:
+            await log_channel.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
 
 @bot.slash_command(name="산적추방", description="다수 혹은 한명의 유저를 산적 그룹으로 부터 추방하는 명령어")
@@ -889,53 +901,62 @@ async def ranks(inter: disnake.ApplicationCommandInteraction, *, 이름들: str)
                 user = await roblox_client.get_user_by_username(name)
 
                 if user is None:
-                    results.append(f"{name}은(는) 유효하지 않은 사용자명이여유")
+                    results.append(f"❌ {name} 은(는) 유효하지 않은 사용자명이여유")
                     continue
 
                 bandit_group = await roblox_client.get_group(Bandit_group_id)
                 bobusang_group = await roblox_client.get_group(Bobusang_group_id)
 
-                bandit_member = bandit_group.get_member(user.id) if bandit_group else None
-                bobusang_member = bobusang_group.get_member(user.id) if bobusang_group else None
+                bandit_result = "산적 그룹에 속해있지 않아 처리하지 않았어유"
+                bobusang_result = "보부상 그룹에 속해있지 않아 처리하지 않았어유"
 
-                if bandit_member is None and bobusang_member is None:
-                    results.append(f"{name}님은 산적과 보부상 그룹 둘 다에 속해있지 않구먼유")
-                    continue
+                if bandit_group:
+                    bandit_member = bandit_group.get_member(user.id)
+                    if bandit_member:
+                        try:
+                            await bandit_group.set_rank(user.id, 1)
+                            bandit_result = "✅ 산적 그룹에서 시정무뢰배로 내렸어유"
+                        except Exception as e:
+                            error_message = str(e)
+                            if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
+                                bandit_result = "ℹ️ 이미 시정무뢰배이여유"
+                            elif "401 Unauthorized" in error_message:
+                                bandit_result = "⚠️ 시정무뢰배 이상 랭크라서 내릴 수 없구먼유"
+                            else:
+                                bandit_result = f"❌ 산적 그룹 처리 중 오류 발생: {str(e)}"
 
-                action_taken = False
+                if bobusang_group:
+                    bobusang_member = bobusang_group.get_member(user.id)
+                    if bobusang_member:
+                        try:
+                            await bobusang_group.kick_user(user.id)
+                            bobusang_result = "✅ 보부상에서 추방했어유"
+                        except Exception as e:
+                            if "400 Bad Request" in str(e) and "The user is invalid or does not exist" in str(e):
+                                bobusang_result = "ℹ️ 이미 보부상 그룹에서 나갔거나 추방되었어유"
+                            else:
+                                bobusang_result = f"❌ 보부상 그룹 처리 중 오류 발생: {str(e)}"
 
-                if bandit_member:
-                    try:
-                        await bandit_group.set_rank(user.id, 1)
-                        results.append(f"{name}님을 시정무뢰배로 내렸어유")
-                        action_taken = True
-                    except Exception as e:
-                        error_message = str(e)
-                        if "400 Bad Request" in error_message and "You cannot change the user's role to the same role" in error_message:
-                            results.append(f"{name}님은 이미 시정무뢰배이여유")
-                        elif "401 Unauthorized" in error_message:
-                            results.append(f"{name}님은 이미 시정무뢰배 이상 랭크라서 내릴 수 없구먼유")
-                        else:
-                            results.append(f"{name}님 산적 그룹 처리 중 오류 발생: {str(e)}")
-
-                if bobusang_member:
-                    try:
-                        await bobusang_group.kick_user(user.id)
-                        results.append(f"{name}님을 보부상에서 추방했어유")
-                        action_taken = True
-                    except Exception as e:
-                        results.append(f"{name}님 보부상 그룹 처리 중 오류 발생: {str(e)}")
-
-                if not action_taken:
-                    results.append(f"{name}님에 대한 처리를 수행하지 못했어유")
+                results.append(f"{name}님 처리 결과:\n  {bandit_result}\n  {bobusang_result}")
 
             except Exception as e:
-                results.append(f"{name}님 처리 중 오류 발생: {str(e)}")
+                results.append(f"❌ {name} 님 처리 중 예상치 못한 오류 발생: {str(e)}")
 
     except Exception as e:
         await inter.followup.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
 
-    await inter.followup.send(f"{inter.user.mention}\n" + "\n".join(results))
+        log_channel = bot.get_channel(1294914388637122570)
+        if log_channel:
+            await log_channel.send(f"{inter.user.mention} 전체 처리 중 에러가 발생했습니다: {e}")
+
+    await inter.followup.send(f"{inter.user.mention}\n" + "\n\n".join(results))
+
+    log_channel = bot.get_channel(1294914388637122570)
+
+    if log_channel:
+        await log_channel.send(f"{inter.user.mention}\n" + "\n".join(results))
+    else:
+        await inter.followup.send("로그 채널을 찾을 수 없어유")
 
 
 @bot.slash_command(name="금지어추가", description="하나 이상의 금지어를 추가합니다. 여러 단어는 띄어쓰기로 구분합니다.")
